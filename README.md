@@ -27,6 +27,7 @@ An advanced Python Playwright automation framework featuring:
 
 3. View reports:
     ```bash
+    chmod +x run_allure.sh
     ./run_allure.sh
     ```
 
