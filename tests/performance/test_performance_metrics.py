@@ -1,5 +1,5 @@
 def test_performance_metrics(page):
-    page.goto("https://the-internet.herokuapp.com/login")
+    page.goto("https://the-internet.herokuapp.com/login", wait_until="domcontentloaded", timeout=60000)
     performance = page.evaluate("""() => {
         return {
             domContentLoaded: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
