@@ -2,7 +2,6 @@ from PIL import ImageChops, Image
 import os
 
 def test_login_page_visual_regression(page,browser_name):
-    browser_name = request.config.getoption("--browser")
     os.makedirs("actual", exist_ok=True)
     os.makedirs("baseline", exist_ok=True)
     os.makedirs("diff", exist_ok=True)
