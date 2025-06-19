@@ -75,7 +75,7 @@ jobs:
           username: "CI/CD Bot"
           payload: |
             {
-              "text": "✅ CI/CD pipeline succeeded for ${{ github.repository }} on branch ${{ github.ref_name }}"
-            }
+              "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            }}
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
