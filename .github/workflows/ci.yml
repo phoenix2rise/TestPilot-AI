@@ -80,9 +80,6 @@ jobs:
         run: |
           REPORT_DIR=allure-report-${{ env.REPORT_TIMESTAMP }}
 
-          # Save full path to generated report
-          REPORT_PATH="${{ github.workspace }}/${REPORT_DIR}"
-
           # Configure git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -91,7 +88,7 @@ jobs:
           git clone --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages-temp
 
           # Copy report folder into gh-pages
-          cp -r "$REPORT_PATH" gh-pages-temp/
+          cp -r ./"$REPORT_DIR" gh-pages-temp/
          
           # Build index.html
           cd gh-pages-temp
