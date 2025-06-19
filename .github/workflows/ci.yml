@@ -76,6 +76,6 @@ jobs:
           payload: |
             {
               "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            }}
+            }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
