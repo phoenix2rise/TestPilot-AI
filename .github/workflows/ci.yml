@@ -78,11 +78,12 @@ jobs:
           echo "REPORT_TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
           allure generate final-results --clean -o allure-report
 
-      - name: Upload Final HTML Report
-        uses: actions/upload-artifact@v4
+      - name: Deploy Allure Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: allure-report-${{ env.REPORT_TIMESTAMP }}
-          path: allure-report
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report-${{ env.REPORT_TIMESTAMP }}
+
 
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.24.0
@@ -90,7 +91,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }} # Ensure this secret is set in your repository/organization secrets, or replace with actual channel ID
           payload: |
             {
-              "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://phoenix2rise.github.io/TestPilot-AI/allure-report-${{ env.REPOR_TTIMESTAMP }}/index.html)"
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
