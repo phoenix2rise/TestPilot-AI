@@ -29,7 +29,7 @@ jobs:
 
       - name: Run tests
         run: |
-          PW_BROWSER=${{ matrix.browser }} pytest TestPilotAI/tests/ui --alluredir=allure-results
+          PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=allure-results
 
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
