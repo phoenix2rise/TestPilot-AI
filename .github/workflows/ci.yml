@@ -70,9 +70,12 @@ jobs:
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.24.0
         with:
-         payload: |
-          {
-            "text": "✅ CI/CD pipeline succeeded for ${{ github.repository }} on branch ${{ github.ref_name }}"
-          }
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }} # Ensure this secret is set in your repository/organization secrets, or replace with actual channel ID
+          icon-emoji: ":robot_face:"
+          username: "CI/CD Bot"
+          payload: |
+            {
+              "text": "✅ CI/CD pipeline succeeded for ${{ github.repository }} on branch ${{ github.ref_name }}"
+            }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
