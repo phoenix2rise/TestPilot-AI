@@ -1,0 +1,8 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","221","test_performance_metrics","tests.performance","Thu Jun 19 20:24:34 UTC 2025","passed","Thu Jun 19 20:24:34 UTC 2025","","test_performance_metrics","",""
+"","1281","test_login_page_visual_regression","tests.visual","Thu Jun 19 20:25:53 UTC 2025","passed","Thu Jun 19 20:25:54 UTC 2025","","test_visual_login","",""
+"","642","test_performance_metrics","tests.performance","Thu Jun 19 20:24:38 UTC 2025","passed","Thu Jun 19 20:24:39 UTC 2025","","test_performance_metrics","",""
+"","274","test_login_page_visual_regression","tests.visual","Thu Jun 19 20:24:35 UTC 2025","passed","Thu Jun 19 20:24:35 UTC 2025","","test_visual_login","",""
+"","694","test_login_page_visual_regression","tests.visual","Thu Jun 19 20:24:40 UTC 2025","passed","Thu Jun 19 20:24:41 UTC 2025","","test_visual_login","",""
+"","1427","test_performance_metrics","tests.performance","Thu Jun 19 20:25:49 UTC 2025","passed","Thu Jun 19 20:25:51 UTC 2025","","test_performance_metrics","",""
+"","26","test_dummy_api_status","tests.api","Thu Jun 19 20:25:48 UTC 2025","passed","Thu Jun 19 20:25:48 UTC 2025","","test_dummy_api","",""
