@@ -42,7 +42,7 @@ jobs:
           path: allure-results
 
   report-merge:
-    name: Merge & Upload Allure Report
+    name: Merge & Deploy Allure Report
     runs-on: ubuntu-latest
     needs: test
 
@@ -91,7 +91,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }} # Ensure this secret is set in your repository/organization secrets, or replace with actual channel ID
           payload: |
             {
-              "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://phoenix2rise.github.io/TestPilot-AI/allure-report-${{ env.REPOR_TIMESTAMP }}/index.html)"
+              "text": "✅ TestPilot-AI CI tests completed. [Click here to download the report artifact](https://phoenix2rise.github.io/TestPilot-AI/allure-report-${{ env.REPORT_TIMESTAMP }}/index.html)"
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
