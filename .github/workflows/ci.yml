@@ -76,22 +76,36 @@ jobs:
           echo "REPORT_TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
           allure generate final-results --clean -o allure-report-${{ env.REPORT_TIMESTAMP }}
 
-      - name: Prepare gh-pages branch with index.html
+      - name: Deploy Allure Report and Update Index Page
         run: |
+          REPORT_DIR=allure-report-${{ env.REPORT_TIMESTAMP }}
+
+          # Save full path to generated report
+          REPORT_PATH="${{ github.workspace }}/${REPORT_DIR}"
+
+          # Configure git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clone gh-pages branch
           git clone --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages-temp
+
+          # Copy report folder into gh-pages
+          cp -r "$REPORT_PATH" gh-pages-temp/
+         
+          # Build index.html
           cd gh-pages-temp
-          cp -r ../allure-report-${{ env.REPORT_TIMESTAMP }} ./
-          echo '<html><head><title>Allure Reports Index</title></head><body><h1>Allure Reports</h1><ul>' > index.html
+          echo '<html><head><title>Allure Reports</title></head><body><h1>Allure Reports</h1><ul>' > index.html
           for dir in allure-report-*; do
             echo "<li><a href=\"$dir/\">$dir</a></li>" >> index.html
           done
           echo '</ul></body></html>' >> index.html
-          git add .
-          git commit -m "Add Allure report ${{ env.REPORT_TIMESTAMP }} and update index"
-          git push origin gh-pages
 
+          # Commit and push
+          git add .
+          git commit -m "Add Allure report $REPORT_DIR and update index"
+          git push origin gh-pages
+ 
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.24.0
         with:
