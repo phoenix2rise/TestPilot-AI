@@ -33,7 +33,7 @@ jobs:
       
       - name: Add environment info to Allure results
         run: |
-          echo "Browser${{ matrix.browser.id }}=${{ matrix.browser }}" > allure-results/environment.properties
+          echo "Browser=${{ matrix.browser }}" > allure-results/environment.properties
           
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
@@ -57,10 +57,19 @@ jobs:
       - name: Merge Allure Results
         run: |
           mkdir -p final-results
-          find merged-results -type f -name "*.json" -exec cp {} final-results/ \;
-          find merged-results -type f -name "*.txt" -exec cp {} final-results/ \;
-          find merged-results -type f -name "*.xml" -exec cp {} final-results/ \;
-          find merged-results -type f -name "environment.properties" -exec cat {} \; >> final-results/environment.properties
+          find merged-results -type f ! -name "environment.properties" -exec cp {} final-results/ \;
+          echo "" > final-results/environment.properties
+          i=1
+          for envfile in $(find merged-results -name "environment.properties"); do
+            while IFS= read -r line; do
+              # Split line into key and value
+              key=$(echo "$line" | cut -d '=' -f 1)
+              value=$(echo "$line" | cut -d '=' -f 2-)
+              # Write to merged file with unique key
+              echo "${key}_${i}=${value}" >> final-results/environment.properties
+            done < "$envfile"
+            i=$((i+1))
+          done
 
       - name: Generate Allure HTML Report
         run: |
