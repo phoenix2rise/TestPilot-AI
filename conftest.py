@@ -1,4 +1,6 @@
 import pytest
+import allure
+
 from playwright.sync_api import sync_playwright
 
 def pytest_addoption(parser):
@@ -6,7 +8,9 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def browser_name(request):
-    return request.config.getoption("--browser")
+    browser = request.config.getoption("--browser")
+    allure.dynamic.label("Browser", browser)
+    return browser
 
 @pytest.fixture(scope="function")
 def page(browser_name, tmp_path_factory):
