@@ -4,10 +4,12 @@ from playwright.sync_api import sync_playwright
 def pytest_addoption(parser):
     parser.addoption("--browser", action="store", default="chromium")
 
-@pytest.fixture(scope="function")
-def page(request, tmp_path_factory):
-    browser_name = request.config.getoption("--browser")
+@pytest.fixture(scope="session")
+def browser_name(request):
+    return request.config.getoption("--browser")
 
+@pytest.fixture(scope="function")
+def page(browser_name, tmp_path_factory):
     with sync_playwright() as p:
         browser = getattr(p, browser_name).launch(headless=True)
         context = browser.new_context(record_video_dir=str(tmp_path_factory.mktemp("videos")))
