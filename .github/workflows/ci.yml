@@ -29,8 +29,12 @@ jobs:
 
       - name: Run tests
         run: |
-          PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=allure-results
-
+          PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=allure-results/${ matrix.browser } --browser=${{ matrix.browser }}
+      
+      - name: Add environment info to Allure results
+        run: |
+          echo "Browser=${{ matrix.browser }}" > allure-results/${{ matrix.browser }}/environment.properties
+          
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
         with:
