@@ -1,6 +1,5 @@
 import pytest
 import allure
-
 from playwright.sync_api import sync_playwright
 
 def pytest_addoption(parser):
@@ -8,9 +7,7 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def browser_name(request):
-    browser = request.config.getoption("--browser")
-    allure.dynamic.label("Browser", browser)
-    return browser
+    return request.config.getoption("--browser")
 
 @pytest.fixture(scope="function")
 def page(browser_name, tmp_path_factory):
@@ -19,6 +16,10 @@ def page(browser_name, tmp_path_factory):
         context = browser.new_context(record_video_dir=str(tmp_path_factory.mktemp("videos")))
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
+
+        # ⬇️ Add browser label here, in test context
+        allure.dynamic.label("browser", browser_name)
+        allure.dynamic.parameter("browser", browser_name)
 
         yield page
 
