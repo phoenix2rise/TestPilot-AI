@@ -68,9 +68,8 @@ jobs:
           i=1
           for result_dir in merged-results/*; do
             if [ -d "$result_dir" ]; then
-              cp "$result_dir"/*.json final-results/ || true
-              cp "$result_dir"/*.txt final-results/ || true
-              cp "$result_dir"/*.xml final-results/ || true
+              find "$result_dir" -maxdepth 1 -name "*.json" -exec cp {} final-results/ \;
+              find "$result_dir" -maxdepth 1 -name "*.txt" -exec cp {} final-results/ \;
 
               if [ -f "$result_dir/environment.properties" ]; then
                 while IFS= read -r line; do
