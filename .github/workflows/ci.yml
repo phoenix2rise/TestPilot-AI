@@ -33,7 +33,7 @@ jobs:
       
       - name: Add environment info to Allure results
         run: |
-          echo "Browser=${{ matrix.browser }}" > allure-results/environment.properties
+          echo "Browser${{ matrix.browser.id }}=${{ matrix.browser }}" > allure-results/environment.properties
           
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
@@ -60,8 +60,7 @@ jobs:
           find merged-results -type f -name "*.json" -exec cp {} final-results/ \;
           find merged-results -type f -name "*.txt" -exec cp {} final-results/ \;
           find merged-results -type f -name "*.xml" -exec cp {} final-results/ \;
-          find merged-results -type f -name "environment.properties" -exec cp {} final-results/ \;
-
+          find merged-results -type f -name "environment.properties" -exec cat {} \; >> final-results/environment.properties
 
       - name: Generate Allure HTML Report
         run: |
