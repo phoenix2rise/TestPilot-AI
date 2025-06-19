@@ -52,21 +52,35 @@ jobs:
       - name: Download Allure Results
         uses: actions/download-artifact@v4
         with:
-          path: merged-results
+         pattern: allure-results-*
+         path: merged-results
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Listing merged-results:"
+          find merged-results -type f
 
       - name: Merge Allure Results
         run: |
           mkdir -p final-results
-          find merged-results -type f ! -name "environment.properties" -exec cp {} final-results/ \;
           echo "" > final-results/environment.properties
+
           i=1
-          for envfile in $(find merged-results -name "environment.properties"); do
-            while IFS= read -r line; do
-              key=$(echo "$line" | cut -d '=' -f 1)
-              value=$(echo "$line" | cut -d '=' -f 2-)
-              echo "${key}_${i}=${value}" >> final-results/environment.properties
-            done < "$envfile"
-            i=$((i+1))
+          for result_dir in merged-results/*; do
+            if [ -d "$result_dir" ]; then
+              cp "$result_dir"/*.json final-results/ || true
+              cp "$result_dir"/*.txt final-results/ || true
+              cp "$result_dir"/*.xml final-results/ || true
+
+              if [ -f "$result_dir/environment.properties" ]; then
+                while IFS= read -r line; do
+                  key=$(echo "$line" | cut -d '=' -f 1)
+                  value=$(echo "$line" | cut -d '=' -f 2-)
+                  echo "${key}_${i}=${value}" >> final-results/environment.properties
+                done < "$result_dir/environment.properties"
+              fi
+              i=$((i+1))
+            fi
           done
 
       - name: Generate Allure HTML Report
@@ -76,6 +90,12 @@ jobs:
           echo "REPORT_TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
           allure generate final-results --clean -o allure-report-${{ env.REPORT_TIMESTAMP }}
 
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ env.REPORT_TIMESTAMP }}
+          path: allure-report-${{ env.REPORT_TIMESTAMP }}
+      
       - name: Deploy Allure Report and Update Index Page
         run: |
           REPORT_DIR=allure-report-${{ env.REPORT_TIMESTAMP }}
