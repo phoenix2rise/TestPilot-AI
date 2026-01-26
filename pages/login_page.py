@@ -1,6 +1,6 @@
 from playwright.sync_api import Page
 
-from utils.locator_healer import fill_with_fallback
+from utils.locator_healer import fill_with_fallback, click_with_fallback
 
 class LoginPage:
     def __init__(self, page: Page):
@@ -18,15 +18,21 @@ class LoginPage:
     def login(self, username, password):
     # Self-heal capable locator fill: primary + fallbacks, with event recording
     fill_with_fallback(
-        self.page,
-        primary=self.username_locator,
-        fallbacks=["input[name='username']"],
-        value=username,
-        page_object=self.__class__.__name__,
-        field="username_locator",
-    )
+            self.page,
+            primary=self.username_locator,
+            fallbacks=["input[name='username']"],
+            value=username,
+            owner=self,
+            field="username_locator",
+        )
     self.page.fill(self.password_locator, password)
-    self.page.click(self.login_button)
+    click_with_fallback(
+            self.page,
+            primary=self.login_button,
+            fallbacks=["button[type='submit']"],
+            owner=self,
+            field="login_button",
+        )
 
     def is_success(self):
         return self.page.locator(self.success_message).is_visible()

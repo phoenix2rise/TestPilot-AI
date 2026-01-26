@@ -1,0 +1,26 @@
+{
+  "events": 1,
+  "promote_min_count": 2,
+  "promote_min_posterior": 0.75,
+  "promote_min_ci_lo": 0.55,
+  "mode": "EXPAND_FALLBACKS",
+  "candidates": [
+    {
+      "file_path": "/mnt/data/TestPilot-AI-main/pages/login_page.py",
+      "class_name": "LoginPage",
+      "field": "username_locator",
+      "action": "",
+      "chosen": "input[name='username']",
+      "count": 1,
+      "total": 1,
+      "posterior_mean": 0.6666666666666666,
+      "ci95": [
+        0.2046902362914556,
+        1.0
+      ],
+      "posterior_alpha": 2.0,
+      "posterior_beta": 1.0
+    }
+  ],
+  "promote_candidates": []
+}

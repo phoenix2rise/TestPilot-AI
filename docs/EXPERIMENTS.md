@@ -29,3 +29,13 @@ Artifact:
 ### Threats to validity
 - Simulation simplifies quantum effects and assumes idealized intercept-resend.
 - Authentication of endpoints is out of scope for the simulation.
+
+## Bayesian confidence model
+Self-heal promotion uses a Beta posterior over fallback success events. We compute posterior mean and 95% credible intervals to decide whether to promote selectors.
+
+
+## Experiment: Self-heal learning curve
+Location: `experiments/self_heal_learning_curve/`
+
+- `run.py` produces a per-run metrics point: `reports/self_heal/learning_curve_point.json`
+- `aggregate.py` can combine many points (downloaded from CI artifacts) into a time-series CSV/JSON and an optional plot.

@@ -1,1 +1,1 @@
-{"ts": 1769453623.6398697, "page_object": "LoginPage", "field": "username_locator", "primary": "#username_broken", "chosen": "input[name='username']", "error": "Exception('demo')"}
+{"ts": 1769454722.6469734, "class_name": "LoginPage", "module": "pages.login_page", "file_path": "/mnt/data/TestPilot-AI-main/pages/login_page.py", "field": "username_locator", "primary": "#username_broken", "chosen": "input[name='username']", "error": "Exception('demo')"}

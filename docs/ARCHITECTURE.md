@@ -24,3 +24,16 @@ Transform TestPilot-AI from a test framework into a real-time, agentic test auto
 - Allure results/report
 - Visual diffs (baseline/actual)
 - QKD experiment artifact JSON
+
+## Generalized self-heal
+Locator self-heal events are recorded with page-object class + source file path, enabling multi-file patch generation from runtime evidence.
+
+## Healing actions
+Supported self-heal actions via `utils/locator_healer.py`:
+- `fill_with_fallback` (type into input)
+- `click_with_fallback` (click)
+- `expect_visible_with_fallback` (assert visibility)
+Each records evidence to `reports/self_heal/locator_events.jsonl` when a fallback succeeds.
+
+## Evidence confidence
+Self-heal evidence is summarized (counts + heuristic confidence) in `reports/self_heal/self_heal_summary.*` and included in QKD-gated PR bodies.
