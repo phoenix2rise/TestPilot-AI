@@ -57,6 +57,16 @@ jobs:
           cat reports/self_heal/self_heal_summary.md || true
           cat reports/self_heal/self_heal_decision.json || true
 
+      - name: Reset repo state before generating patch
+        run: |
+          git reset --hard
+          git clean -fdx
+
+      - name: Clear previous self-heal evidence (avoid stale paths)
+        run: |
+          rm -rf reports/self_heal reports/patches
+          mkdir -p reports/self_heal reports/patches
+
       - name: Generate patch (promote primary if confident; else expand fallbacks)
         env:
           SELF_HEAL_DIR: "reports/self_heal"
@@ -83,7 +93,7 @@ jobs:
 
       - name: Validate patch applies cleanly
         run: |
-             git apply --check reports/patches/selected_self_heal.patch
+          git apply --check reports/patches/selected_self_heal.patch
 
       - name: Record learning-curve point (experiment artifact)
         env:
