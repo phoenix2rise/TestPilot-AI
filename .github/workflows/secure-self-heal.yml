@@ -81,6 +81,10 @@ jobs:
           echo "Selected patch:"
           cat reports/patches/selected_self_heal.patch || true
 
+      - name: Validate patch applies cleanly
+        run: |
+             git apply --check reports/patches/selected_self_heal.patch
+
       - name: Record learning-curve point (experiment artifact)
         env:
           SELF_HEAL_DIR: "reports/self_heal"
