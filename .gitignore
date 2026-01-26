@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+allure-results/
+reports/
+docs_site/
+.tmp_gh_pages/
+.playwright/
+.pytest_cache/
