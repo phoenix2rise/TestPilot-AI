@@ -1,0 +1,38 @@
+name: Publish Evidence Pages (gh-pages)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps (minimal)
+        run: |
+          python -m pip install --upgrade pip
+          # no additional deps required
+
+      - name: Publish evidence pages (requires learning_curve_point.json from latest run)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # If the point doesn't exist in this checkout, we skip gracefully
+          if [ ! -f reports/self_heal/learning_curve_point.json ]; then
+            echo "No reports/self_heal/learning_curve_point.json found in repo checkout. Run Secure Self-Heal workflow first, or commit the point, or trigger this from the same workflow."
+            exit 0
+          fi
+          python scripts/publish_evidence_pages.py

@@ -1,10 +1,10 @@
-name: Secure Self-Heal (QKD-gated PR, real locator)
+name: Secure Self-Heal (QKD-gated PR, safety ladder)
 
 on:
   workflow_dispatch:
     inputs:
       enable_pr:
-        description: "If true, open a PR with a self-heal locator patch (requires permissions)."
+        description: "If true, open a PR (requires permissions)."
         required: true
         default: "false"
 
@@ -32,52 +32,89 @@ jobs:
         run: |
           python -m experiments.qkd_mitm.run
 
-      - name: Run controlled failing locator test (forces fallback + records event)
+      - name: Run controlled locator break (records evidence)
         env:
           BREAK_LOCATOR: "true"
           SELF_HEAL_DIR: "reports/self_heal"
         run: |
           pytest -q tests/ui/test_login.py -k login
 
-      - name: Generate locator self-heal patch from recorded events
+      - name: Summarize self-heal evidence
         env:
           SELF_HEAL_DIR: "reports/self_heal"
         run: |
-          python scripts/generate_self_heal_patch.py
-          cat reports/patches/locator_self_heal.patch || true
+          python scripts/summarize_self_heal.py
+          python scripts/decide_self_heal_action.py
+          python experiments/self_heal_learning_curve.py
+          cat reports/self_heal/self_heal_summary.md
+          cat reports/self_heal/self_heal_decision.json
+
+      - name: Generate patch (promote primary if confident; else expand fallbacks)
+        env:
+          SELF_HEAL_DIR: "reports/self_heal"
+          # Safety ladder defaults:
+          SELF_HEAL_PROMOTE_MIN_COUNT: "2"
+          SELF_HEAL_PROMOTE_MIN_POSTERIOR: "0.75"
+          SELF_HEAL_PROMOTE_MIN_CI_LO: "0.55"
+          SELF_HEAL_MIN_COUNT: "2"
+        run: |
+          MODE=$(python -c "import json;print(json.load(open('reports/self_heal/self_heal_decision.json'))['mode'])")
+          echo "MODE=$MODE" >> $GITHUB_ENV
+          if [ "$MODE" = "PROMOTE_PRIMARY" ]; then
+            echo "Promoting primary locators"
+            python scripts/generate_self_heal_patch.py
+            cp reports/patches/locator_self_heal.patch reports/patches/selected_self_heal.patch
+          else
+            echo "Expanding fallback lists"
+            python scripts/generate_fallback_expansion_patch.py
+            cp reports/patches/fallback_expansion.patch reports/patches/selected_self_heal.patch
+          fi
+          echo "Selected patch:"
+          cat reports/patches/selected_self_heal.patch || true
+
+- name: Record learning-curve point (experiment artifact)
+  env:
+    SELF_HEAL_DIR: "reports/self_heal"
+  run: |
+    python -m experiments.self_heal_learning_curve.run
 
       - name: Open QKD-gated PR (optional)
         if: ${{ github.event.inputs.enable_pr == 'true' }}
         env:
-          ENABLE_PR: "true"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BASE_BRANCH: main
         run: |
-          # Establish QKD session + invoke privileged tool to apply patch + open PR
           python - << 'PY'
-          import os, time
+          import os, time, json
+          from pathlib import Path
           from security.qkd.bb84 import BB84Params
           from security.qkd.channel import establish_qkd_session
           from mcp.gateway import default_gateway, SessionContext
 
           params = BB84Params()
           sess = establish_qkd_session(params, intercept_resend=False, ttl_seconds=300)
-          print("QKD:", "accepted" if sess.accepted else "rejected", "qber=", round(sess.qber, 3), "fp=", sess.key_fingerprint)
           if not sess.accepted:
             raise SystemExit(2)
+
+          summary_md = Path("reports/self_heal/self_heal_summary.md").read_text(encoding="utf-8") if Path("reports/self_heal/self_heal_summary.md").exists() else ""
+          decision = json.loads(Path("reports/self_heal/self_heal_decision.json").read_text(encoding="utf-8")) if Path("reports/self_heal/self_heal_decision.json").exists() else {}
+          mode = decision.get("mode","UNKNOWN")
+          patch_path = "reports/patches/selected_self_heal.patch"
 
           g = default_gateway()
           ctx = SessionContext(sess.created_ts, sess.expires_ts, sess.accepted, sess.key_fingerprint)
 
-          patch_path = "reports/patches/locator_self_heal.patch"
-          branch = f"secure-self-heal/locator/{int(time.time())}"
-          title = "Self-heal locator update (QKD-gated)"
+          branch = f"secure-self-heal/{mode.lower()}/{int(time.time())}"
+          title = f"Self-heal ({mode}) update (QKD-gated)"
           body = "\n".join([
-              "This PR was created by TestPilot-AI's secure self-heal pipeline.",
+              "This PR was created by TestPilot-AI's secure self-heal safety ladder.",
               "",
+              f"- Mode: **{mode}**",
               f"- QKD session fingerprint: `{sess.key_fingerprint}`",
               f"- QBER: `{sess.qber:.3f}`",
-              "- Policy: privileged actions allowed only when QKD is accepted and not expired.",
+              "",
+              "## Evidence summary (confidence)",
+              summary_md,
               "",
               f"Patch applied: `{patch_path}`",
               "Evidence: `reports/self_heal/locator_events.jsonl`",
@@ -97,12 +134,24 @@ jobs:
             raise SystemExit(3)
           PY
 
-      - name: Upload self-heal evidence
+- name: Publish gh-pages evidence trend (optional)
+  if: ${{ github.event.inputs.enable_pr == 'true' }}
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    python scripts/publish_evidence_pages.py
+
+- name: Upload evidence
+
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: self-heal-evidence
           path: |
             reports/self_heal/locator_events.jsonl
-            reports/patches/locator_self_heal.patch
+            reports/self_heal/self_heal_summary.json
+            reports/self_heal/self_heal_summary.md
+            reports/self_heal/self_heal_decision.json
+            reports/self_heal/learning_curve_point.json
+            reports/patches/selected_self_heal.patch
             reports/qkd/qkd_mitm_artifact.json
