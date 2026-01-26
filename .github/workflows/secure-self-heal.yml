@@ -1,0 +1,108 @@
+name: Secure Self-Heal (QKD-gated PR, real locator)
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_pr:
+        description: "If true, open a PR with a self-heal locator patch (requires permissions)."
+        required: true
+        default: "false"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  secure-self-heal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run QKD MITM proof (artifact)
+        run: |
+          python -m experiments.qkd_mitm.run
+
+      - name: Run controlled failing locator test (forces fallback + records event)
+        env:
+          BREAK_LOCATOR: "true"
+          SELF_HEAL_DIR: "reports/self_heal"
+        run: |
+          pytest -q tests/ui/test_login.py -k login
+
+      - name: Generate locator self-heal patch from recorded events
+        env:
+          SELF_HEAL_DIR: "reports/self_heal"
+        run: |
+          python scripts/generate_self_heal_patch.py
+          cat reports/patches/locator_self_heal.patch || true
+
+      - name: Open QKD-gated PR (optional)
+        if: ${{ github.event.inputs.enable_pr == 'true' }}
+        env:
+          ENABLE_PR: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: main
+        run: |
+          # Establish QKD session + invoke privileged tool to apply patch + open PR
+          python - << 'PY'
+          import os, time
+          from security.qkd.bb84 import BB84Params
+          from security.qkd.channel import establish_qkd_session
+          from mcp.gateway import default_gateway, SessionContext
+
+          params = BB84Params()
+          sess = establish_qkd_session(params, intercept_resend=False, ttl_seconds=300)
+          print("QKD:", "accepted" if sess.accepted else "rejected", "qber=", round(sess.qber, 3), "fp=", sess.key_fingerprint)
+          if not sess.accepted:
+            raise SystemExit(2)
+
+          g = default_gateway()
+          ctx = SessionContext(sess.created_ts, sess.expires_ts, sess.accepted, sess.key_fingerprint)
+
+          patch_path = "reports/patches/locator_self_heal.patch"
+          branch = f"secure-self-heal/locator/{int(time.time())}"
+          title = "Self-heal locator update (QKD-gated)"
+          body = "\n".join([
+              "This PR was created by TestPilot-AI's secure self-heal pipeline.",
+              "",
+              f"- QKD session fingerprint: `{sess.key_fingerprint}`",
+              f"- QBER: `{sess.qber:.3f}`",
+              "- Policy: privileged actions allowed only when QKD is accepted and not expired.",
+              "",
+              f"Patch applied: `{patch_path}`",
+              "Evidence: `reports/self_heal/locator_events.jsonl`",
+              ""
+          ])
+
+          res = g.invoke("commit_fix", {
+              "patch_path": patch_path,
+              "branch": branch,
+              "title": title,
+              "body": body,
+              "base": os.getenv("BASE_BRANCH", "main"),
+          }, session=ctx)
+
+          print(res)
+          if not res.get("ok"):
+            raise SystemExit(3)
+          PY
+
+      - name: Upload self-heal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-heal-evidence
+          path: |
+            reports/self_heal/locator_events.jsonl
+            reports/patches/locator_self_heal.patch
+            reports/qkd/qkd_mitm_artifact.json

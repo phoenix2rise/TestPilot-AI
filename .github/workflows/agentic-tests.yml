@@ -1,0 +1,48 @@
+name: Agentic Control Plane (QKD + Gateway)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  qkd-unit-and-gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run QKD unit tests (fast)
+        run: |
+          pytest -q tests/unit/test_qkd_bb84.py
+
+      - name: Run QKD MITM experiment (proof artifact)
+        run: |
+          python -m experiments.qkd_mitm.run
+
+      - name: Smoke invoke gateway tools (no browsers required)
+        run: |
+          python - << 'PY'
+          from mcp.gateway import default_gateway
+          g = default_gateway()
+          print(g.invoke("security_status", {}))
+          print(g.invoke("run_pytest", {"extra": ["-q", "tests/unit/test_qkd_bb84.py"]}))
+          PY
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: control-plane-artifacts
+          path: |
+            reports/qkd/qkd_mitm_artifact.json

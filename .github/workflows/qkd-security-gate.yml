@@ -1,0 +1,31 @@
+name: QKD Security Gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  qkd-mitm-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run QKD MITM experiment (must detect interception)
+        run: |
+          python -m experiments.qkd_mitm.run
+
+      - name: Upload QKD artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qkd-artifacts
+          path: reports/qkd/qkd_mitm_artifact.json
