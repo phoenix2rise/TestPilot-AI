@@ -1,132 +1,74 @@
 from __future__ import annotations
 
-import json
-import os
-import re
-import sys
-import subprocess
+import json, os, re, sys, subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0,str(PROJECT_ROOT))
 
-DECISION_PATH = Path(os.getenv("SELF_HEAL_DIR", "reports/self_heal")) / "self_heal_decision.json"
-PATCH_DIR = PROJECT_ROOT / "reports" / "patches"
-PATCH_PATH = PATCH_DIR / "fallback_expansion.patch"
-
-
-def run(cmd: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True)
+DECISION_PATH = Path(os.getenv("SELF_HEAL_DIR","reports/self_heal"))/"self_heal_decision.json"
+PATCH_DIR = PROJECT_ROOT/"reports"/"patches"
+PATCH_PATH = PATCH_DIR/"fallback_expansion.patch"
 
 
-def load_decision() -> dict:
-    if not DECISION_PATH.exists():
-        raise FileNotFoundError(str(DECISION_PATH))
-    return json.loads(DECISION_PATH.read_text(encoding="utf-8"))
+def run(cmd):
+    return subprocess.run(cmd,cwd=PROJECT_ROOT,capture_output=True,text=True)
 
 
-def to_repo_path(file_path: str) -> Path:
-    p = Path(file_path)
-    try:
-        return p.relative_to(PROJECT_ROOT)
-    except Exception:
-        return p if p.is_absolute() else (PROJECT_ROOT / p)
-
-
-def parse_fallbacks_list(text: str) -> Tuple[List[str], Tuple[int, int]] | Tuple[None, None]:
-    """
-    Find the first `fallbacks=[ ... ]` and parse it as a list of strings.
-    Returns (list, (start_idx, end_idx)) where indices are the inside-of-brackets span.
-    Very pragmatic parser: only supports string literals inside.
-    """
-    m = re.search(r"fallbacks\s*=\s*\[(.*?)\]", text, flags=re.DOTALL)
+def parse_fallbacks(text):
+    m=re.search(r"fallbacks\s*=\s*\[(.*?)\]",text,re.DOTALL)
     if not m:
-        return None, None
-    inner = m.group(1).strip()
-    start, end = m.start(1), m.end(1)
-
-    if not inner:
-        return [], (start, end)
-
-    # Extract string literals safely-ish
-    # Matches '...' or "..." (no nested quotes handling, but fine for our generated code)
-    lits = re.findall(r"""(['"])(.*?)(\1)""", inner, flags=re.DOTALL)
-    fallbacks = [s for _, s, _ in lits]
-    return fallbacks, (start, end)
+        return None,None
+    inner=m.group(1)
+    vals=re.findall(r"""['"](.*?)['"]""",inner)
+    return vals,(m.start(1),m.end(1))
 
 
-def replace_fallbacks_list(text: str, new_list: List[str], span: Tuple[int, int]) -> str:
-    """
-    Replace the inside of fallbacks=[ ... ] with a JSON-dumped list (valid Python list of strings).
-    """
-    start, end = span
-    # json.dumps returns ["a", "b"] using double quotes; valid in Python
-    dumped = json.dumps(new_list, ensure_ascii=False)
-    # We only replace the inside; the brackets remain in place.
-    return text[:start] + dumped[1:-1] + text[end:]
+def main():
+    d=json.loads(DECISION_PATH.read_text())
+    file_map:Dict[Path,List[str]]={}
 
+    for c in d.get("candidates",[]):
+        fp=c.get("file_path")
+        sel=c.get("chosen")
+        if fp and sel:
+            file_map.setdefault(PROJECT_ROOT/fp,[]).append(sel)
 
-def main() -> int:
-    d = load_decision()
-    candidates = d.get("candidates", []) or []
+    PATCH_DIR.mkdir(parents=True,exist_ok=True)
+    changed_files=[]
 
-    # group selectors per file (take chosen selectors)
-    file_to_selectors: Dict[Path, List[str]] = {}
-    for c in candidates:
-        fp = (c.get("file_path") or "").strip()
-        sel = (c.get("chosen") or "").strip()
-        if not fp or not sel:
-            continue
-        repo_path = to_repo_path(fp)
-        file_path = repo_path if repo_path.is_absolute() else (PROJECT_ROOT / repo_path)
-        file_to_selectors.setdefault(file_path, []).append(sel)
-
-    if not file_to_selectors:
-        print("No candidates to expand fallbacks.")
-        return 1
-
-    PATCH_DIR.mkdir(parents=True, exist_ok=True)
-
-    changed_any = False
     try:
-        for file_path, selectors in file_to_selectors.items():
+        for file_path,sels in file_map.items():
             if not file_path.exists():
                 print(f"Skip missing file: {file_path}")
                 continue
 
-            original = file_path.read_text(encoding="utf-8")
-            fallbacks, span = parse_fallbacks_list(original)
-            if fallbacks is None or span is None:
-                print(f"No fallbacks=[...] list found in {file_path}")
+            text=file_path.read_text()
+            fallbacks,span=parse_fallbacks(text)
+            if fallbacks is None:
                 continue
 
-            new_list = list(fallbacks)
-            for sel in selectors:
-                if sel not in new_list:
-                    new_list.append(sel)
-
-            if new_list == fallbacks:
-                print(f"No fallback changes needed in {file_path.name}")
+            new=list(dict.fromkeys(fallbacks+sels))
+            if new==fallbacks:
                 continue
 
-            updated = replace_fallbacks_list(original, new_list, span)
-            file_path.write_text(updated, encoding="utf-8")
-            changed_any = True
-            print(f"Expanded fallbacks in {file_path.name}: +{len(new_list)-len(fallbacks)} selector(s)")
+            dumped=json.dumps(new,ensure_ascii=False)
+            updated=text[:span[0]]+dumped[1:-1]+text[span[1]:]
+            file_path.write_text(updated)
+            changed_files.append(file_path)
 
-        if not changed_any:
-            print("No changes applied.")
+        if not changed_files:
+            print("No changes.")
             return 1
 
-        run(["git", "add", "-N", "."])
-        diff = run(["git", "diff", "--"])
-        PATCH_PATH.write_text(diff.stdout, encoding="utf-8")
+        files=[str(p.relative_to(PROJECT_ROOT)) for p in changed_files]
+        run(["git","add","-N"]+files)
+        diff=run(["git","diff","--"]+files)
+        PATCH_PATH.write_text(diff.stdout)
 
-        chk = run(["git", "apply", "--check", str(PATCH_PATH)])
-        if chk.returncode != 0:
-            print("Patch failed git apply --check:")
+        chk=run(["git","apply","--check",str(PATCH_PATH)])
+        if chk.returncode!=0:
             print(chk.stderr)
             return 2
 
@@ -134,8 +76,8 @@ def main() -> int:
         return 0
 
     finally:
-        run(["git", "checkout", "--", "."])
+        run(["git","checkout","--"]+[str(p) for p in changed_files])
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     raise SystemExit(main())
