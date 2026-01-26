@@ -92,8 +92,26 @@ def default_gateway() -> MCPGateway:
     g.register("run_pytest", tool_run_pytest, privileged=False)
     g.register("allure_generate", tool_allure_generate, privileged=False)
     g.register("security_status", tool_security_status, privileged=False)
-    # Example privileged tool placeholder:
-    def tool_privileged_commit(_args: Dict[str, Any]) -> Dict[str, Any]:
-        return {"message": "Commit tool placeholder (wire to GitHub later)."}
+
+    # Privileged tool: apply patch and open PR (CI demo)
+    def tool_privileged_commit(args: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        args:
+          - patch_path: path to a unified diff patch file
+          - branch: branch name
+          - title: PR title / commit message
+          - body: PR body
+          - base: base branch (default main)
+        """
+        from mcp.github_pr import PRRequest, create_pr
+        patch_path = args.get("patch_path")
+        branch = args.get("branch")
+        title = args.get("title")
+        body = args.get("body", "")
+        base = args.get("base", "main")
+        if not patch_path or not branch or not title:
+            raise ValueError("patch_path, branch, title required")
+        return create_pr(PRRequest(patch_path=patch_path, branch=branch, title=title, body=body, base=base))
+
     g.register("commit_fix", tool_privileged_commit, privileged=True)
     return g

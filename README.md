@@ -71,3 +71,7 @@ CI workflow:
 - `docs/SECURITY.md`
 - `docs/EXPERIMENTS.md`
 - `docs/REPRODUCIBILITY.md`
+
+
+### QKD-gated PR demo
+Run the workflow **Secure Self-Heal (QKD-gated PR)** with `enable_pr=true` to open a PR using a privileged tool that is gated by a valid QKD session.
