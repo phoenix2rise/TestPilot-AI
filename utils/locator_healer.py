@@ -35,7 +35,14 @@ def record_event(event: LocatorEvent) -> None:
 def _infer_file_path(page_object: Any) -> str:
     try:
         fp = inspect.getsourcefile(page_object.__class__)
-        return str(fp) if fp else ""
+        if not fp:
+            return ""
+        p = Path(fp).resolve()
+        repo_root = Path(__file__).resolve().parents[1]  # repo root
+        try:
+            return str(p.relative_to(repo_root))
+        except Exception:
+            return str(p.name)
     except Exception:
         return ""
 
