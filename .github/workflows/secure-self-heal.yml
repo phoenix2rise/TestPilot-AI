@@ -31,8 +31,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # If your UI tests actually run Playwright browsers in CI,
-      # you usually need this. Keep it if tests launch a real browser.
       - name: Install Playwright browsers
         run: |
           python -m playwright install --with-deps
@@ -40,6 +38,13 @@ jobs:
       - name: Run QKD MITM proof (artifact)
         run: |
           python -m experiments.qkd_mitm.run
+
+      # Clean BEFORE tests so evidence/decision aren't deleted later
+      - name: Clean workspace before evidence run
+        run: |
+          git reset --hard
+          git clean -fdx
+          mkdir -p reports/self_heal reports/patches
 
       - name: Run controlled locator break (records evidence)
         env:
@@ -54,18 +59,12 @@ jobs:
         run: |
           python scripts/summarize_self_heal.py
           python scripts/decide_self_heal_action.py
+          echo "---- reports/self_heal contents ----"
+          ls -la reports/self_heal || true
+          echo "---- self_heal_summary.md ----"
           cat reports/self_heal/self_heal_summary.md || true
+          echo "---- self_heal_decision.json ----"
           cat reports/self_heal/self_heal_decision.json || true
-
-      - name: Reset repo state before generating patch
-        run: |
-          git reset --hard
-          git clean -fdx
-
-      - name: Clear previous self-heal evidence (avoid stale paths)
-        run: |
-          rm -rf reports/self_heal reports/patches
-          mkdir -p reports/self_heal reports/patches
 
       - name: Generate patch (promote primary if confident; else expand fallbacks)
         env:
@@ -75,6 +74,7 @@ jobs:
           SELF_HEAL_PROMOTE_MIN_CI_LO: "0.55"
           SELF_HEAL_MIN_COUNT: "2"
         run: |
+          test -f reports/self_heal/self_heal_decision.json
           MODE=$(python -c "import json;print(json.load(open('reports/self_heal/self_heal_decision.json'))['mode'])")
           echo "MODE=$MODE" >> $GITHUB_ENV
 
@@ -88,11 +88,12 @@ jobs:
             cp reports/patches/fallback_expansion.patch reports/patches/selected_self_heal.patch
           fi
 
-          echo "Selected patch:"
-          cat reports/patches/selected_self_heal.patch || true
+          echo "---- selected_self_heal.patch (head) ----"
+          sed -n '1,160p' reports/patches/selected_self_heal.patch || true
 
       - name: Validate patch applies cleanly
         run: |
+          test -f reports/patches/selected_self_heal.patch
           git apply --check reports/patches/selected_self_heal.patch
 
       - name: Record learning-curve point (experiment artifact)
