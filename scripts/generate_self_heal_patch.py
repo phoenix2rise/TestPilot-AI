@@ -53,6 +53,21 @@ def update_assignment_text(text, field, selector):
     pat = rf"(self\.{re.escape(field)}\s*=\s*)(['\"])(.*?)(\2)"
     return re.sub(pat, rf"\1\2{selector}\2", text, count=1)
 
+def normalize_repo_path(fp: str) -> Path:
+    p = Path(fp)
+    if p.is_absolute():
+        # try to strip everything up to the repo folder name if present
+        s = str(p).replace("\\", "/")
+        marker = "/TestPilot-AI/"
+        if marker in s:
+            return Path(s.split(marker, 1)[1])
+        # fallback: try last 2-3 parts (pages/login_page.py)
+        parts = p.parts
+        if "pages" in parts:
+            idx = parts.index("pages")
+            return Path(*parts[idx:])
+        return Path(p.name)
+    return Path(fp)
 
 def main():
     events=parse_events()
@@ -66,7 +81,8 @@ def main():
 
     try:
         for (fp,cls,field,action),(selector,count) in updates.items():
-            file_path = PROJECT_ROOT / fp
+            rel_path = normalize_repo_path(fp)
+            file_path = PROJECT_ROOT / rel_path
             if not file_path.exists():
                 print(f"Skip missing file: {file_path}")
                 continue
