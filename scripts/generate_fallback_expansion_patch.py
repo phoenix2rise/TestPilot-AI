@@ -24,6 +24,28 @@ def parse_fallbacks(text):
     vals=re.findall(r"""['"](.*?)['"]""",inner)
     return vals,(m.start(1),m.end(1))
 
+def normalize_repo_path(fp: str) -> Path:
+    p = Path(fp)
+
+    # If already relative, use it
+    if not p.is_absolute():
+        return p
+
+    s = str(p).replace("\\", "/")
+
+    # Try to strip everything before repo folder name
+    marker = "/TestPilot-AI/"
+    if marker in s:
+        return Path(s.split(marker, 1)[1])
+
+    # Fallback: extract from known folder like pages/
+    parts = p.parts
+    if "pages" in parts:
+        idx = parts.index("pages")
+        return Path(*parts[idx:])
+
+    # Last resort: just filename
+    return Path(p.name)
 
 def main():
     d=json.loads(DECISION_PATH.read_text())
