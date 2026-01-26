@@ -21,7 +21,7 @@ class LoginPage:
         fill_with_fallback(
             self.page,
             primary=self.username_locator,
-            fallbacks=["input[name='username']"],
+            fallbacks=["username", "input[name='username']"]"],
             value=username,
             owner=self,
             field="username_locator",

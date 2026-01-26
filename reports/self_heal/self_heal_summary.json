@@ -1,6 +1,23 @@
 {
-  "events": 1,
+  "events": 3,
   "items": [
+    {
+      "file_path": "pages/login_page.py",
+      "class_name": "LoginPage",
+      "field": "username_locator",
+      "action": "fill",
+      "primary": "#username_broken",
+      "chosen": "input[name='username']",
+      "count": 2,
+      "total": 2,
+      "posterior_mean": 0.75,
+      "credible_interval_95": [
+        0.37044763207167314,
+        1.0
+      ],
+      "posterior_alpha": 3.0,
+      "posterior_beta": 1.0
+    },
     {
       "file_path": "/mnt/data/TestPilot-AI-main/pages/login_page.py",
       "class_name": "LoginPage",
