@@ -1,5 +1,9 @@
 name: Secure Self-Heal (QKD-gated PR, safety ladder)
 
+env:
+  GITHUB_TOKEN: ${{ secrets.TP_AI_PAT }}
+  BASE_BRANCH: main
+
 on:
   workflow_dispatch:
     inputs:
