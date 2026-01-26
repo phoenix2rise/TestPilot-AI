@@ -1,9 +1,5 @@
 name: Secure Self-Heal (QKD-gated PR, safety ladder)
 
-env:
-  GITHUB_TOKEN: ${{ secrets.TP_AI_PAT }}
-  BASE_BRANCH: main
-
 on:
   workflow_dispatch:
     inputs:
@@ -43,7 +39,6 @@ jobs:
         run: |
           python -m experiments.qkd_mitm.run
 
-      # Clean BEFORE tests so evidence/decision aren't deleted later
       - name: Clean workspace before evidence run
         run: |
           git reset --hard
@@ -106,10 +101,20 @@ jobs:
         run: |
           python -m experiments.self_heal_learning_curve.run
 
+      # IMPORTANT:
+      # - Use GH_TOKEN with a PAT to avoid "GitHub Actions is not permitted to create PRs"
+      # - Create repo secret: TP_AI_PAT (classic PAT with repo scope)
+      - name: Debug gh auth (who am I?)
+        if: ${{ inputs.enable_pr == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.TP_AI_PAT }}
+        run: |
+          gh auth status || true
+
       - name: Open QKD-gated PR (optional)
         if: ${{ inputs.enable_pr == 'true' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TP_AI_PAT }}
           BASE_BRANCH: main
         run: |
           python - << 'PY'
@@ -166,7 +171,7 @@ jobs:
       - name: Publish gh-pages evidence trend (optional)
         if: ${{ inputs.enable_pr == 'true' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TP_AI_PAT }}
         run: |
           python scripts/publish_evidence_pages.py
 
