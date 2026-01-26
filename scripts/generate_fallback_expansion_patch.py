@@ -51,11 +51,18 @@ def main():
     d=json.loads(DECISION_PATH.read_text())
     file_map:Dict[Path,List[str]]={}
 
-    for c in d.get("candidates",[]):
-        fp=c.get("file_path")
-        sel=c.get("chosen")
-        if fp and sel:
-            file_map.setdefault(PROJECT_ROOT/fp,[]).append(sel)
+    for c in d.get("candidates", []):
+    fp = c.get("file_path")
+    sel = c.get("chosen")
+
+    if not fp or not sel:
+        continue
+
+    rel_path = normalize_repo_path(fp)
+    file_path = PROJECT_ROOT / rel_path
+
+    file_map.setdefault(file_path, []).append(sel)
+
 
     PATCH_DIR.mkdir(parents=True,exist_ok=True)
     changed_files=[]
