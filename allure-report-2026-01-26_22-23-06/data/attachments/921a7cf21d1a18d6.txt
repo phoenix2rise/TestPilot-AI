@@ -1,0 +1,7 @@
+Performance metrics for webkit:
+  DOM Content Loaded: 548.00 ms
+  Load Event: 0.00 ms
+  First Paint: N/A
+  First Contentful Paint: 549.00 ms
+  Time to Interactive (approx): 453.00 ms
+  Response Start: 123.00 ms
