@@ -1,0 +1,1 @@
+{"ts": 1769453623.6398697, "page_object": "LoginPage", "field": "username_locator", "primary": "#username_broken", "chosen": "input[name='username']", "error": "Exception('demo')"}

@@ -75,3 +75,7 @@ CI workflow:
 
 ### QKD-gated PR demo
 Run the workflow **Secure Self-Heal (QKD-gated PR)** with `enable_pr=true` to open a PR using a privileged tool that is gated by a valid QKD session.
+
+
+### Secure self-heal (real locator) PR demo
+Run the workflow **Secure Self-Heal (QKD-gated PR, real locator)** with `enable_pr=true`. It forces a controlled locator break, records the fallback usage, generates a patch that promotes the working fallback selector to the primary locator, and opens a PR using a QKD-gated privileged tool.
