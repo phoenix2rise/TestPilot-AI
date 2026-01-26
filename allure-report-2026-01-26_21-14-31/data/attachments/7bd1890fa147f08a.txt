@@ -1,0 +1,7 @@
+Performance metrics for chromium:
+  DOM Content Loaded: 355.60 ms
+  Load Event: 0.00 ms
+  First Paint: N/A
+  First Contentful Paint: N/A
+  Time to Interactive (approx): 340.80 ms
+  Response Start: 133.80 ms
