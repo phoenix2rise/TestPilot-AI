@@ -1,0 +1,32 @@
+{
+  "ts": 1769452257.5969224,
+  "params": {
+    "n_qubits": 2048,
+    "sample_size": 256,
+    "qber_threshold": 0.11,
+    "channel_noise": 0.0,
+    "rng_seed": null
+  },
+  "clean": {
+    "created_ts": 1769452257.483903,
+    "expires_ts": 1769452317.483903,
+    "qber": 0.0,
+    "accepted": true,
+    "reason": "OK",
+    "key_fingerprint": "78daec79911a8d90",
+    "transcript": null
+  },
+  "mitm": {
+    "created_ts": 1769452257.5968764,
+    "expires_ts": 1769452317.5968764,
+    "qber": 0.2578125,
+    "accepted": false,
+    "reason": "QKD_EAVESDROP_OR_NOISE_DETECTED",
+    "key_fingerprint": "N/A",
+    "transcript": null
+  },
+  "assertions": {
+    "clean_should_accept": true,
+    "mitm_should_reject": true
+  }
+}

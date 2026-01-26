@@ -1,0 +1,10 @@
+{
+  "name": "reports",
+  "tools": [
+    {
+      "name": "allure_generate",
+      "privileged": false,
+      "description": "Allure report generation"
+    }
+  ]
+}

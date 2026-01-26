@@ -1,0 +1,99 @@
+"""
+Minimal MCP-like gateway (tool registry + policy gating).
+
+This is NOT a full MCP implementation.
+It provides:
+- a tool registry
+- a single entrypoint to invoke tools
+- a security gate that requires a valid QKD session for privileged tools
+
+You can evolve this into a proper MCP server later.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Callable, Dict, Any, Optional, Tuple
+import subprocess
+import sys
+import json
+import os
+import time
+
+from security.qkd.policy import is_session_valid, PolicyDecision
+
+ToolFn = Callable[[Dict[str, Any]], Dict[str, Any]]
+
+@dataclass
+class SessionContext:
+    qkd_created_ts: float
+    qkd_expires_ts: float
+    qkd_accepted: bool
+    qkd_key_fingerprint: str
+
+class MCPGateway:
+    def __init__(self) -> None:
+        self.tools: Dict[str, Tuple[ToolFn, bool]] = {}  # name -> (fn, privileged)
+
+    def register(self, name: str, fn: ToolFn, *, privileged: bool = False) -> None:
+        self.tools[name] = (fn, privileged)
+
+    def invoke(self, name: str, args: Dict[str, Any], *, session: Optional[SessionContext] = None) -> Dict[str, Any]:
+        if name not in self.tools:
+            return {"ok": False, "error": f"UNKNOWN_TOOL:{name}"}
+        fn, privileged = self.tools[name]
+
+        if privileged:
+            if session is None:
+                return {"ok": False, "error": "DENY:NO_SESSION"}
+            decision: PolicyDecision = is_session_valid(session.qkd_created_ts, session.qkd_expires_ts, session.qkd_accepted)
+            if not decision.allowed:
+                return {"ok": False, "error": decision.reason}
+
+        try:
+            out = fn(args)
+            return {"ok": True, "result": out}
+        except Exception as e:
+            return {"ok": False, "error": f"EXCEPTION:{type(e).__name__}:{e}"}
+
+# --- Built-in tools (wrapping your existing framework) ---
+
+def tool_run_pytest(args: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Run pytest as a subprocess.
+    args:
+      - extra: list[str] additional pytest args
+    """
+    extra = args.get("extra", [])
+    if not isinstance(extra, list):
+        extra = []
+    cmd = [sys.executable, "-m", "pytest"] + extra
+    p = subprocess.run(cmd, capture_output=True, text=True)
+    return {"returncode": p.returncode, "stdout": p.stdout[-4000:], "stderr": p.stderr[-4000:]}
+
+def tool_allure_generate(args: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generate allure report if allure is installed and results exist.
+    Safe no-op if allure isn't available.
+    """
+    results_dir = args.get("results_dir", "reports/allure-results")
+    out_dir = args.get("out_dir", "reports/allure-report")
+    # Try calling 'allure' CLI, fallback to no-op
+    try:
+        p = subprocess.run(["allure", "generate", results_dir, "-o", out_dir, "--clean"], capture_output=True, text=True)
+        return {"returncode": p.returncode, "stdout": p.stdout[-2000:], "stderr": p.stderr[-2000:], "out_dir": out_dir}
+    except FileNotFoundError:
+        return {"returncode": 127, "stdout": "", "stderr": "allure CLI not found", "out_dir": out_dir}
+
+def tool_security_status(args: Dict[str, Any]) -> Dict[str, Any]:
+    return {"status": "ok", "ts": time.time()}
+
+def default_gateway() -> MCPGateway:
+    g = MCPGateway()
+    g.register("run_pytest", tool_run_pytest, privileged=False)
+    g.register("allure_generate", tool_allure_generate, privileged=False)
+    g.register("security_status", tool_security_status, privileged=False)
+    # Example privileged tool placeholder:
+    def tool_privileged_commit(_args: Dict[str, Any]) -> Dict[str, Any]:
+        return {"message": "Commit tool placeholder (wire to GitHub later)."}
+    g.register("commit_fix", tool_privileged_commit, privileged=True)
+    return g

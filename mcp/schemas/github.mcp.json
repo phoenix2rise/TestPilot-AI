@@ -1,0 +1,10 @@
+{
+  "name": "github",
+  "tools": [
+    {
+      "name": "commit_fix",
+      "privileged": true,
+      "description": "Commit a patch / open PR (placeholder)"
+    }
+  ]
+}

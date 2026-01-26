@@ -1,0 +1,15 @@
+{
+  "name": "pytest-playwright-wrapper",
+  "tools": [
+    {
+      "name": "run_pytest",
+      "privileged": false,
+      "description": "Execute pytest suite with extra args"
+    },
+    {
+      "name": "allure_generate",
+      "privileged": false,
+      "description": "Generate Allure report from results"
+    }
+  ]
+}

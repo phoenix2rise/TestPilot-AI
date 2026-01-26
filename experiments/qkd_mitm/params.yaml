@@ -1,0 +1,8 @@
+qkd:
+  n_qubits: 2048
+  sample_size: 256
+  qber_threshold: 0.11
+  ttl_seconds: 60
+notes:
+  - Clean channel should accept under low noise.
+  - Intercept-resend (MITM) should be detected via elevated QBER.
