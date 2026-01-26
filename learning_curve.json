@@ -1,0 +1,14 @@
+[
+  {
+    "ts": 1769466309.924084,
+    "run_id": "21376269445",
+    "sha": "09d56125b8d81d4d90ed8751f0eb0af8b60e0ba0",
+    "mode": "EXPAND_FALLBACKS",
+    "events": 3,
+    "items": 2,
+    "evidence_score": 0.7222222222222222,
+    "promote_min_count": 2,
+    "promote_min_posterior": 0.75,
+    "promote_min_ci_lo": 0.55
+  }
+]
