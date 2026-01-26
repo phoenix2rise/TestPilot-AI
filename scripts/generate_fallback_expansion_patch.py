@@ -27,22 +27,20 @@ def normalize_repo_path(fp: str) -> Path:
       - Windows paths: C:\\...\\TestPilot-AI\\pages\\login_page.py
     """
     p = Path(fp)
-
     if not p.is_absolute():
         return p
 
     s = str(p).replace("\\", "/")
 
-    # Strip everything before /TestPilot-AI/ if present
     marker = "/TestPilot-AI/"
     if marker in s:
         return Path(s.split(marker, 1)[1])
 
-    # Fallback: strip everything before /pages/ if present
+    # ✅ FIX: preserve the slash
     if "/pages/" in s:
-        return Path("pages" + s.split("/pages/", 1)[1])
+        tail = s.split("/pages/", 1)[1]
+        return Path("pages") / Path(tail)
 
-    # Last resort: filename only
     return Path(p.name)
 
 
@@ -61,7 +59,6 @@ def parse_fallbacks_list(text: str) -> Tuple[Optional[List[str]], Optional[Tuple
     if not inner:
         return [], (start, end)
 
-    # Extract string literals '...' or "..."
     lits = re.findall(r"""(['"])(.*?)(\1)""", inner, flags=re.DOTALL)
     fallbacks = [s for _, s, _ in lits]
     return fallbacks, (start, end)
@@ -69,11 +66,11 @@ def parse_fallbacks_list(text: str) -> Tuple[Optional[List[str]], Optional[Tuple
 
 def replace_fallbacks_list(text: str, new_list: List[str], span: Tuple[int, int]) -> str:
     """
-    Replace the inside of `fallbacks=[ ... ]` with the contents of json.dumps(list)[1:-1]
-    which yields a valid Python list interior:  "a", "b"
+    Replace the inside of `fallbacks=[ ... ]` with json-dumped content.
+    json.dumps(["a","b"]) is valid Python too; we insert only the interior:  "a", "b"
     """
     start, end = span
-    dumped = json.dumps(new_list, ensure_ascii=False)  # ["a","b"] is valid Python too
+    dumped = json.dumps(new_list, ensure_ascii=False)
     return text[:start] + dumped[1:-1] + text[end:]
 
 
@@ -84,7 +81,6 @@ def main() -> int:
     decision = json.loads(DECISION_PATH.read_text(encoding="utf-8"))
     candidates = decision.get("candidates", []) or []
 
-    # file -> selectors to add
     file_map: Dict[Path, List[str]] = {}
     for c in candidates:
         fp = (c.get("file_path") or "").strip()
@@ -103,6 +99,8 @@ def main() -> int:
     PATCH_DIR.mkdir(parents=True, exist_ok=True)
 
     changed_files: List[Path] = []
+    rel_files: List[str] = []
+
     try:
         for file_path, selectors in file_map.items():
             if not file_path.exists():
@@ -115,7 +113,6 @@ def main() -> int:
                 print(f"No fallbacks=[...] list found in {file_path}")
                 continue
 
-            # merge unique, preserve order
             new_list = list(fallbacks)
             for sel in selectors:
                 if sel not in new_list:
@@ -128,20 +125,21 @@ def main() -> int:
             updated = replace_fallbacks_list(original, new_list, span)
             file_path.write_text(updated, encoding="utf-8")
             changed_files.append(file_path)
+            rel_files.append(str(file_path.relative_to(PROJECT_ROOT)))
             print(f"Expanded fallbacks in {file_path.name}: +{len(new_list) - len(fallbacks)} selector(s)")
 
         if not changed_files:
             print("No files changed; no patch produced.")
             return 1
 
-        # Generate patch ONLY for changed files
-        rel_files = [str(p.relative_to(PROJECT_ROOT)) for p in changed_files]
-
+        # Produce patch ONLY for changed files
         run(["git", "add", "-N", *rel_files])
         diff = run(["git", "diff", "--", *rel_files])
         PATCH_PATH.write_text(diff.stdout, encoding="utf-8")
 
-        # Sanity-check patch
+        # ✅ IMPORTANT: revert changes first, then check patch applies to clean tree
+        run(["git", "checkout", "--", *rel_files])
+
         chk = run(["git", "apply", "--check", str(PATCH_PATH)])
         if chk.returncode != 0:
             print("Patch failed git apply --check:")
@@ -152,8 +150,9 @@ def main() -> int:
         return 0
 
     finally:
-        if changed_files:
-            run(["git", "checkout", "--", *[str(p.relative_to(PROJECT_ROOT)) for p in changed_files]])
+        # Ensure repo is clean even on failures
+        if rel_files:
+            run(["git", "checkout", "--", *rel_files])
 
 
 if __name__ == "__main__":
