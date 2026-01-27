@@ -6,6 +6,13 @@ locators:
       - "button:has-text('Reject All')"
       - "button:has-text('I agree')"
       - "button:has-text('Accept all')"
+  popup_close:
+    primary: "button[aria-label='Close']"
+    fallbacks:
+      - "button[aria-label='Dismiss']"
+      - "button:has-text('Close')"
+      - "button:has-text('No thanks')"
+      - "button:has-text('Not now')"
   search_results:
     primary: "div#search"
     fallbacks:
