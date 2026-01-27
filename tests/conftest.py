@@ -1,9 +1,15 @@
 import os
+import sys
 from pathlib import Path
 
 import pytest
 import allure
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Error as PlaywrightError, sync_playwright
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 def pytest_addoption(parser):
@@ -15,12 +21,10 @@ def pytest_addoption(parser):
     except ValueError:
         # Option already registered by another plugin: keep it.
         pass
-    
 
 
 @pytest.fixture(scope="session")
 def browser_name(request):
-    # Works whether --browser came from our addoption or a plugin.
     return request.config.getoption("--browser")
 
 
@@ -33,11 +37,18 @@ def page(browser_name, tmp_path_factory):
     trace_dir.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = getattr(p, browser_name).launch(headless=True)
+        try:
+            browser = getattr(p, browser_name).launch(headless=True)
+        except PlaywrightError as exc:
+            message = str(exc)
+            if "Executable doesn't exist" in message or "playwright install" in message:
+                pytest.skip(f"Playwright browser binaries missing for {browser_name}: {message}")
+            raise
         context = browser.new_context(record_video_dir=str(video_dir))
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
 
+        # ⬇️ Add browser label here, in test context
         allure.dynamic.label("browser", browser_name)
         allure.dynamic.parameter("browser", browser_name)
 
