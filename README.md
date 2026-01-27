@@ -154,7 +154,7 @@ flowchart TD
   G -- No --> H["Stop: already healed<br/>(no PR, no learning-curve)"]
   G -- Yes --> I[git apply --check]
   I --> J[Python syntax guard: py_compile]
-  J --> K[Cross-browser matrix: chromium | firefox | webkit]
+  J --> K[Cross-browser matrix: chromium / firefox / webkit]
   K --> L{All green?}
 
   L -- Yes --> M[QKD session establish]
