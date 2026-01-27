@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,11 @@ from playwright.sync_api import Error as PlaywrightError, sync_playwright
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+
+def _is_missing_browser_error(message: str) -> bool:
+    lowered = message.lower()
+    return "executable doesn't exist" in lowered or "playwright install" in lowered
 
 
 def pytest_addoption(parser):
@@ -41,9 +47,27 @@ def page(browser_name, tmp_path_factory):
             browser = getattr(p, browser_name).launch(headless=True)
         except PlaywrightError as exc:
             message = str(exc)
-            if "Executable doesn't exist" in message or "playwright install" in message:
-                pytest.skip(f"Playwright browser binaries missing for {browser_name}: {message}")
-            raise
+            if _is_missing_browser_error(message):
+                install_result = subprocess.run(
+                    [sys.executable, "-m", "playwright", "install", browser_name],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                if install_result.returncode != 0:
+                    pytest.skip(
+                        "Playwright browser install failed for "
+                        f"{browser_name}:\n{install_result.stdout}\n"
+                        f"{install_result.stderr}"
+                    )
+                try:
+                    browser = getattr(p, browser_name).launch(headless=True)
+                except PlaywrightError:
+                    pytest.skip(
+                        f"Playwright browser binaries missing for {browser_name}: {message}"
+                    )
+            else:
+                raise
         context = browser.new_context(record_video_dir=str(video_dir))
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
