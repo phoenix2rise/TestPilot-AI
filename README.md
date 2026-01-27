@@ -160,8 +160,8 @@ flowchart TD
   L -- Yes --> M[QKD session establish]
   L -- No --> N[QKD session establish]
 
-  M --> O[Open PR (normal)]
-  N --> P[Open PR (draft)]
+  M --> O[Open PR - normal]
+  N --> P[Open PR - draft]
 
   O --> Q[Human review + merge]
   P --> Q
