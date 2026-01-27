@@ -13,6 +13,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
+def _is_missing_browser_error(message: str) -> bool:
+    lowered = message.lower()
+    return "executable doesn't exist" in lowered or "playwright install" in lowered
+
+
 def pytest_addoption(parser):
     # pytest-playwright (and some other plugins) already define --browser.
     # If it exists, adding it again raises:
