@@ -11,12 +11,26 @@ from utils.travel_dates import next_friday_to_monday_trip
 def _run_flow(page, site_name: str, flow_name: str, vars: dict[str, str]) -> None:
     cfg = load_site_config(site_name)
 
+    allure.dynamic.label("site", cfg.name)
+    allure.dynamic.parameter("site", cfg.name)
+    allure.dynamic.label("flow", flow_name)
+    allure.dynamic.parameter("flow", flow_name)
+
     registry = LocatorRegistry(site=cfg.name, locators=cfg.locators)
     ctx = FlowContext(base_url=cfg.base_url, vars=vars, registry=registry)
     try:
         FlowRunner(ctx).run(page, flow_name, cfg.flows)
     except (PlaywrightError, PlaywrightTimeoutError, RuntimeError) as exc:
-        pytest.skip(f"Skipping due to external site instability: {exc}")
+        skip_message = (
+            f"Skipping due to external site instability "
+            f"(site={cfg.name}, flow={flow_name}): {exc}"
+        )
+        allure.attach(
+            skip_message,
+            name="skip reason",
+            attachment_type=allure.attachment_type.TEXT,
+        )
+        pytest.skip(skip_message)
 
     assert page.url
 

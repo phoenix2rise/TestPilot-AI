@@ -1,3 +1,3 @@
 #!/bin/bash
-pytest --alluredir=allure-results
-allure serve allure-results
+pytest --alluredir=reports/allure-results
+allure serve reports/allure-results
