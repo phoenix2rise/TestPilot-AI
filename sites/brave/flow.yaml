@@ -1,0 +1,9 @@
+base_url: "https://search.brave.com"
+flows:
+  search:
+    steps:
+      - goto: "/search?q=${QUERY}"
+      - click_if_present:
+          field: "cookie_reject"
+      - expect_visible:
+          field: "search_results"
