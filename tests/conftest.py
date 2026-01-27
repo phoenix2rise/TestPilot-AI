@@ -7,11 +7,19 @@ from playwright.sync_api import sync_playwright
 
 
 def pytest_addoption(parser):
-    parser.addoption("--browser", action="store", default="chromium")
+    # pytest-playwright (and some other plugins) already define --browser.
+    # If it exists, adding it again raises:
+    # ValueError: option names {'--browser'} already added
+    try:
+        parser.addoption("--browser", action="store", default="chromium")
+    except ValueError:
+        # Option already registered by another plugin: keep it.
+        pass
 
 
 @pytest.fixture(scope="session")
 def browser_name(request):
+    # Works whether --browser came from our addoption or a plugin.
     return request.config.getoption("--browser")
 
 
