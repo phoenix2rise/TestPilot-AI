@@ -6,17 +6,9 @@ from sites.runner import FlowRunner, FlowContext
 from utils.locator_registry import LocatorRegistry
 
 
-def pytest_addoption(parser):
-    # Add --site safely (ignore if already present)
-    try:
-        parser.addoption("--site", action="store", default=os.getenv("TP_SITE", "demo"))
-    except ValueError:
-        pass
-
-
 @pytest.fixture(scope="session")
 def site_name(pytestconfig):
-    return pytestconfig.getoption("--site")
+    return pytestconfig.getoption("site", default=os.getenv("TP_SITE", "demo"))
 
 
 def test_login_flow(page, site_name):
