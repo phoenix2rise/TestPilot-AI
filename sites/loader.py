@@ -62,4 +62,4 @@ def resolve_site_name(cli_value: str | None = None) -> str:
         return cli_value
     if os.getenv("TP_SITE"):
         return os.environ["TP_SITE"]
-    return "demo"
+    return "booking"
