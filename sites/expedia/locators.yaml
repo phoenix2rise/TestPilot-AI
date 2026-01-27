@@ -17,4 +17,6 @@ locators:
     primary: "[data-stid='property-listing']"
     fallbacks:
       - "[data-stid='property-listing-card']"
+      - "[data-stid='lodging-listing']"
+      - "[data-stid='property-listing-results']"
       - "section[data-testid='property-listing']"

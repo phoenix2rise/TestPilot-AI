@@ -16,4 +16,5 @@ locators:
   search_results:
     primary: "div#search"
     fallbacks:
+      - "div#rcnt"
       - "div#rso"

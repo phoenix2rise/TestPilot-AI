@@ -17,4 +17,6 @@ locators:
     primary: "[data-testid='property-card']"
     fallbacks:
       - "[data-testid='property-card-container']"
+      - "[data-testid='property-card-details']"
+      - "[data-testid='hotel-card']"
       - "[data-testid='title']"
