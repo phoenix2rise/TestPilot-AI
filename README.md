@@ -140,21 +140,18 @@ Artifacts produced by the workflow:
 
 ---
 
-## 🧭 Mermaid Diagram (Safety Ladder)
-
-```mermaid
 flowchart TD
   A[workflow_dispatch enable_pr] --> B[Clean workspace]
   B --> C[Run test with BREAK_LOCATOR=true]
   C --> D[Collect locator_events.jsonl]
   D --> E[Summarize evidence]
-  E --> F[Decide mode PROMOTE_PRIMARY or EXPAND_FALLBACKS]
+  E --> F[Decide mode: PROMOTE_PRIMARY or EXPAND_FALLBACKS]
   F --> G{Patch produced?}
 
-  G -- No --> H[Stop: already healed\n(no PR, no learning-curve)]
+  G -- No --> H["Stop: already healed<br/>(no PR, no learning-curve)"]
   G -- Yes --> I[git apply --check]
-  I --> J[Python syntax guard py_compile]
-  J --> K[Cross-browser matrix\nchromium firefox webkit]
+  I --> J[Python syntax guard: py_compile]
+  J --> K[Cross-browser matrix: chromium | firefox | webkit]
   K --> L{All green?}
 
   L -- Yes --> M[QKD session establish]
