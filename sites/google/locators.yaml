@@ -1,0 +1,12 @@
+locators:
+  cookie_reject:
+    primary: "button#W0wltc"
+    fallbacks:
+      - "button:has-text('Reject all')"
+      - "button:has-text('Reject All')"
+      - "button:has-text('I agree')"
+      - "button:has-text('Accept all')"
+  search_results:
+    primary: "div#search"
+    fallbacks:
+      - "div#rso"
