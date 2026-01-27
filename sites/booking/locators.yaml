@@ -1,0 +1,13 @@
+locators:
+  cookie_essential:
+    primary: "button#onetrust-reject-all-handler"
+    fallbacks:
+      - "button:has-text('Reject all')"
+      - "button:has-text('Reject All')"
+      - "button:has-text('Decline')"
+      - "button:has-text('Only necessary')"
+  search_results:
+    primary: "[data-testid='property-card']"
+    fallbacks:
+      - "[data-testid='property-card-container']"
+      - "[data-testid='title']"

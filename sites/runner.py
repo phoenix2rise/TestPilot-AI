@@ -44,7 +44,8 @@ class FlowRunner:
             op, payload = next(iter(step.items()))
 
             if op == "goto":
-                path = str(payload)
+                raw = str(payload)
+                path = _substitute(raw, self.ctx.vars)
                 url = self.ctx.base_url.rstrip("/") + "/" + path.lstrip("/")
                 page.goto(url)
                 continue
@@ -55,6 +56,18 @@ class FlowRunner:
                 if not ok:
                     raise RuntimeError(f"click failed: field={field} selectors not found")
                 page.click(sel)
+                continue
+
+            if op == "click_if_present":
+                field = str(payload.get("field"))
+                sel, ok = self.ctx.registry.try_locators(
+                    page,
+                    field,
+                    action="click_if_present",
+                    timeout_ms=1500,
+                )
+                if ok:
+                    page.click(sel)
                 continue
 
             if op == "fill":
@@ -79,5 +92,19 @@ class FlowRunner:
                     page.wait_for_selector(sel, timeout=10000, state="visible")
                     continue
                 raise ValueError(f"Unknown expect condition: {payload}")
+
+            if op == "expect_visible":
+                field = str(payload.get("field"))
+                sel, ok = self.ctx.registry.try_locators(
+                    page,
+                    field,
+                    action="expect_visible",
+                    timeout_ms=10000,
+                    state="visible",
+                )
+                if not ok:
+                    raise RuntimeError(f"expect_visible failed: field={field} selectors not found")
+                page.wait_for_selector(sel, timeout=10000, state="visible")
+                continue
 
             raise ValueError(f"Unknown op '{op}' in flow steps")

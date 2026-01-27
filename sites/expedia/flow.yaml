@@ -1,0 +1,9 @@
+base_url: "https://www.expedia.com"
+flows:
+  search:
+    steps:
+      - goto: "/Hotel-Search?destination=${DESTINATION}&checkin=${CHECKIN}&checkout=${CHECKOUT}&rooms=1&adults=2"
+      - click_if_present:
+          field: "cookie_essential"
+      - expect_visible:
+          field: "search_results"

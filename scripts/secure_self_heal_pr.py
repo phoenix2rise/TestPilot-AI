@@ -14,21 +14,27 @@ from security.qkd.bb84 import BB84Params
 from security.qkd.channel import establish_qkd_session
 from mcp.gateway import default_gateway, SessionContext
 
-def make_demo_patch(patch_path: str) -> None:
-    """Create a tiny patch that updates a demo file. This stands in for a locator fix."""
-    demo_file = PROJECT_ROOT / "agents" / "SELF_HEAL_DEMO.md"
-    if not demo_file.exists():
-        demo_file.write_text("# Self-Heal Demo\n\nThis file is modified by the secure self-heal workflow.\n", encoding="utf-8")
+def make_self_heal_patch(patch_path: str) -> None:
+    """Create a tiny patch that updates a self-heal marker file."""
+    marker_file = PROJECT_ROOT / "agents" / "SELF_HEAL.md"
+    if not marker_file.exists():
+        marker_file.write_text(
+            "# Self-Heal Marker\n\nThis file is modified by the secure self-heal workflow.\n",
+            encoding="utf-8",
+        )
 
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    demo_file.write_text(demo_file.read_text(encoding="utf-8") + f"\n- Demo patch applied at {stamp} UTC\n", encoding="utf-8")
+    marker_file.write_text(
+        marker_file.read_text(encoding="utf-8") + f"\n- Self-heal patch applied at {stamp} UTC\n",
+        encoding="utf-8",
+    )
 
     # produce patch
-    os.system("git add -N agents/SELF_HEAL_DEMO.md >/dev/null 2>&1")
-    os.system(f"git diff -- agents/SELF_HEAL_DEMO.md > {patch_path}")
+    os.system("git add -N agents/SELF_HEAL.md >/dev/null 2>&1")
+    os.system(f"git diff -- agents/SELF_HEAL.md > {patch_path}")
 
     # revert working tree change; patch will be applied by privileged tool
-    os.system("git checkout -- agents/SELF_HEAL_DEMO.md >/dev/null 2>&1")
+    os.system("git checkout -- agents/SELF_HEAL.md >/dev/null 2>&1")
 
 def main() -> int:
     enable_pr = os.getenv("ENABLE_PR", "false").lower() == "true"
@@ -45,8 +51,8 @@ def main() -> int:
 
     patch_dir = PROJECT_ROOT / "reports" / "patches"
     patch_dir.mkdir(parents=True, exist_ok=True)
-    patch_path = str(patch_dir / "secure_self_heal_demo.patch")
-    make_demo_patch(patch_path)
+    patch_path = str(patch_dir / "secure_self_heal.patch")
+    make_self_heal_patch(patch_path)
 
     g = default_gateway()
     ctx = SessionContext(
@@ -57,9 +63,9 @@ def main() -> int:
     )
 
     branch = f"secure-self-heal/{int(time.time())}"
-    title = "Secure self-heal demo (QKD-gated)"
+    title = "Secure self-heal update (QKD-gated)"
     body = "\n".join([
-        "This PR was created by TestPilot-AI's secure self-heal demo.",
+        "This PR was created by TestPilot-AI's secure self-heal workflow.",
         "",
         f"- QKD session fingerprint: `{sess.key_fingerprint}`",
         f"- QBER: `{sess.qber:.3f}`",

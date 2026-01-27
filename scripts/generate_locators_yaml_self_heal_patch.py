@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SELF_HEAL_DIR = Path(os.getenv("SELF_HEAL_DIR", "reports/self_heal"))
 EVENTS_PATH = SELF_HEAL_DIR / "locator_events.jsonl"
 
-SITE = os.getenv("TP_SITE", "demo")
+SITE = os.getenv("TP_SITE", "booking")
 LOCATORS_PATH = PROJECT_ROOT / "sites" / SITE / "locators.yaml"
 PATCH_DIR = PROJECT_ROOT / "reports" / "patches"
 PATCH_PATH = PATCH_DIR / "locators_yaml_self_heal.patch"

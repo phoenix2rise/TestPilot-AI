@@ -37,14 +37,22 @@ class LocatorRegistry:
             raise KeyError(f"Unknown field '{field}' in locators.yaml")
         return self._specs[field]
 
-    def try_locators(self, page, field: str, action: str, *, timeout_ms: int = 2000) -> Tuple[str, bool]:
+    def try_locators(
+        self,
+        page,
+        field: str,
+        action: str,
+        *,
+        timeout_ms: int = 2000,
+        state: str = "attached",
+    ) -> Tuple[str, bool]:
         spec = self.spec(field)
         candidates = [spec.primary] + list(spec.fallbacks)
 
         last_err: Optional[str] = None
         for sel in candidates:
             try:
-                page.wait_for_selector(sel, timeout=timeout_ms, state="attached")
+                page.wait_for_selector(sel, timeout=timeout_ms, state=state)
                 write_event(LocatorEvent(
                     ts=now_ts(),
                     site=self.site,

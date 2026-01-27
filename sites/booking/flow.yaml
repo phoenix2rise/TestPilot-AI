@@ -1,0 +1,9 @@
+base_url: "https://www.booking.com"
+flows:
+  search:
+    steps:
+      - goto: "/searchresults.html?ss=${DESTINATION}&checkin=${CHECKIN}&checkout=${CHECKOUT}&group_adults=2&no_rooms=1&group_children=0"
+      - click_if_present:
+          field: "cookie_essential"
+      - expect_visible:
+          field: "search_results"
