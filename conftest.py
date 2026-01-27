@@ -1,9 +1,19 @@
+import os
+from pathlib import Path
+
 import pytest
 import allure
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Error as PlaywrightError, sync_playwright
 
 def pytest_addoption(parser):
-    parser.addoption("--browser", action="store", default="chromium")
+    # pytest-playwright (and some other plugins) already define --browser.
+    # If it exists, adding it again raises:
+    # ValueError: option names {'--browser'} already added
+    try:
+        parser.addoption("--browser", action="store", default="chromium")
+    except ValueError:
+        # Option already registered by another plugin: keep it.
+        pass
 
 @pytest.fixture(scope="session")
 def browser_name(request):
@@ -11,9 +21,21 @@ def browser_name(request):
 
 @pytest.fixture(scope="function")
 def page(browser_name, tmp_path_factory):
+    artifact_root = Path(os.getenv("PW_ARTIFACT_DIR", "artifacts/playwright"))
+    video_dir = artifact_root / "videos" / browser_name
+    trace_dir = artifact_root / "traces" / browser_name
+    video_dir.mkdir(parents=True, exist_ok=True)
+    trace_dir.mkdir(parents=True, exist_ok=True)
+
     with sync_playwright() as p:
-        browser = getattr(p, browser_name).launch(headless=True)
-        context = browser.new_context(record_video_dir=str(tmp_path_factory.mktemp("videos")))
+        try:
+            browser = getattr(p, browser_name).launch(headless=True)
+        except PlaywrightError as exc:
+            message = str(exc)
+            if "Executable doesn't exist" in message or "playwright install" in message:
+                pytest.skip(f"Playwright browser binaries missing for {browser_name}: {message}")
+            raise
+        context = browser.new_context(record_video_dir=str(video_dir))
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
 
@@ -23,6 +45,6 @@ def page(browser_name, tmp_path_factory):
 
         yield page
 
-        context.tracing.stop(path=str(tmp_path_factory.mktemp("traces") / f"trace_{browser_name}.zip"))
+        context.tracing.stop(path=str(trace_dir / f"trace_{browser_name}.zip"))
         context.close()
         browser.close()
