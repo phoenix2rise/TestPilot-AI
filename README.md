@@ -1,103 +1,218 @@
-[![Evidence Trend](https://img.shields.io/badge/Live-Evidence%20Trend-success)](https://phoenix2rise.github.io/TestPilot-AI/)
-[![Secure Self-Heal](https://github.com/phoenix2rise/TestPilot-AI/actions/workflows/secure-self-heal.yml/badge.svg)](https://github.com/phoenix2rise/TestPilot-AI/actions/workflows/secure-self-heal.yml)
-# TestPilot-AI
+# TestPilot-AI – Secure Self-Healing Test Automation with QKD
 
-## Badges
+This repository demonstrates an **agentic AI-driven self-healing test automation system** protected by **Quantum Key Distribution (QKD)** and governed by an evidence-based safety ladder.
 
-- **Live Evidence Trend**: opens the GitHub Pages dashboard that charts `evidence_score` over time.
-- **Secure Self-Heal**: opens the workflow runs where you can download the latest evidence artifacts (QKD MITM proof, self-heal summaries, patches, and learning-curve point).
+It is designed to speak to **both hiring managers and academics**:
 
-Evidence Trend: `https://phoenix2rise.github.io/TestPilot-AI/`
-Workflow: `https://github.com/phoenix2rise/TestPilot-AI/actions/workflows/secure-self-heal.yml`
+* Engineers see a practical CI/CD pipeline that repairs brittle UI tests.
+* Researchers see a reproducible experiment with Bayesian evidence, learning curves, and cryptographic gating.
 
-An advanced Python Playwright automation framework featuring:
-
-- ✅ UI & API tests
-- 🔁 Retry logic for flaky tests
-- 📊 HTML and Allure reporting
-- 🔔 Slack notifications via GitHub Actions
-- 🌐 Cross-browser CI
-- 📂 Self-healing locators and modular design
-- 🖼 Visual comparison testing
-- ⚡ Performance testing
-- 🤖 ChatGPT-assisted test script generation
-
-## 🚀 How to Use
-
-1. Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    playwright install
-    ```
-
-2. Run tests with:
-    ```bash
-    pytest --browser chromium
-    ```
-
-3. View reports:
-    ```bash
-    chmod +x run_allure.sh
-    ./run_allure.sh
-    ```
-
-4. GitHub Actions handles CI across Chromium, Firefox, and WebKit.
 ---
 
-## Agentic AI + MCP Control Plane (New)
+## 🚀 Key Concepts
 
-This repo now includes a minimal **MCP-like gateway** (`mcp/gateway.py`) and agent skeletons:
+### Agentic Self-Heal
 
-- `agents/triage_agent.py` (failure classification)
-- `agents/self_heal_agent.py` (self-heal proposal)
-- `agents/test_designer_agent.py` (coverage suggestions)
+The system intentionally breaks a UI locator, observes fallback selector behavior, and decides whether to:
 
-The gateway registers tools (e.g., run pytest, generate Allure report) and can **gate privileged tools** behind a security policy.
+* **Promote a new primary locator**, or
+* **Expand fallback lists**, or
+* **Do nothing (NO_OP)** if already healed.
 
-## Quantum Cryptography Layer (QKD, Protocol-Accurate Simulation)
+### Evidence-Based Decision
 
-To showcase quantum-safe safeguarding of sensitive AI pipelines, this repo includes a **BB84 QKD simulation**:
+Decisions are made using:
 
-- `security/qkd/bb84.py` (BB84 simulation + sifting + QBER)
-- `security/qkd/channel.py` (clean vs intercept-resend sessions)
-- `security/qkd/policy.py` (tool gating based on session validity)
+* `locator_events.jsonl`
+* Bayesian confidence thresholds
+* Credible intervals
 
-### Real-time proof (CI artifacts)
-Run the MITM detection experiment:
+Only statistically justified fixes produce patches.
 
-```bash
-python -m experiments.qkd_mitm.run
+### Quantum Key Distribution (QKD)
+
+Before any automated Pull Request is created:
+
+* A BB84 QKD session is established
+* QBER and fingerprint are validated
+* PR creation is cryptographically gated
+
+This demonstrates how **future quantum-safe pipelines** can protect AI-driven code changes.
+
+---
+
+## 🧠 Secure Self-Heal Workflow (High Level)
+
+1. Intentionally break a UI locator (`BREAK_LOCATOR=true`)
+2. Run Playwright UI test
+3. Capture fallback selector usage
+4. Summarize evidence (Bayesian)
+5. Decide mode: PROMOTE_PRIMARY or EXPAND_FALLBACKS
+6. Generate a patch (or NO_OP)
+7. Validate patch:
+
+   * `git apply --check`
+   * Python syntax guard (`py_compile`)
+8. Run cross-browser matrix (Chromium, Firefox, WebKit)
+9. Establish QKD session
+10. Open Pull Request:
+
+    * Normal PR if all browsers pass
+    * Draft PR if any browser fails
+
+NO_OP runs skip PR creation and learning-curve recording.
+
+---
+
+## 🔐 Safety Ladder
+
+* Evidence gate (Bayesian thresholds)
+* Syntax guard (AST compile)
+* Cross-browser gate
+* Quantum cryptographic gate (QKD)
+* Human-in-the-loop PR review
+
+This prevents unsafe autonomous code modification.
+
+---
+
+## 🧪 Learning Curve (Research Angle)
+
+Only successful interventions contribute to the learning curve.
+
+NO_OP runs are excluded to avoid bias:
+
+> "Only statistically justified self-heal interventions are recorded as learning events."
+
+Artifacts are stored as:
+
+* `learning_curve_point.json`
+* gh-pages visualization
+
+---
+
+## ▶️ How to Run
+
+### Prerequisites
+
+1. Create a GitHub Personal Access Token (classic) with `repo` scope
+2. Add it as a secret:
+
+```
+TP_AI_PAT
 ```
 
-It produces:
+### Run Workflow
 
-- `reports/qkd/qkd_mitm_artifact.json`
+1. Go to **Actions → Secure Self-Heal**
+2. Click **Run workflow**
+3. Set:
 
-CI workflow:
-- `.github/workflows/qkd-security-gate.yml`
+```
+enable_pr = true
+```
 
-## Docs for both hiring managers and academics
-- `docs/ARCHITECTURE.md`
-- `docs/SECURITY.md`
-- `docs/EXPERIMENTS.md`
-- `docs/REPRODUCIBILITY.md`
+---
 
+## 📦 Outputs
 
-### QKD-gated PR demo
-Run the workflow **Secure Self-Heal (QKD-gated PR)** with `enable_pr=true` to open a PR using a privileged tool that is gated by a valid QKD session.
+Artifacts produced by the workflow:
 
+* **Evidence**
 
-### Secure self-heal (real locator) PR demo
-Run the workflow **Secure Self-Heal (QKD-gated PR, real locator)** with `enable_pr=true`. It forces a controlled locator break, records the fallback usage, generates a patch that promotes the working fallback selector to the primary locator, and opens a PR using a QKD-gated privileged tool.
+  * `reports/self_heal/locator_events.jsonl`
+  * `self_heal_summary.md`
+  * `self_heal_decision.json`
 
+* **Patch**
 
-### Self-heal confidence evidence
-Each self-heal run produces `reports/self_heal/self_heal_summary.md` (human-readable) and `.json` (machine-readable) with simple confidence scoring based on repeated fallback successes.
+  * `selected_self_heal.patch`
 
+* **Cross-browser artifacts**
 
-### Self-heal learning curve experiment
-Each run produces `reports/self_heal/self_heal_learning_curve.png`, plotting Bayesian posterior confidence of healed locators over time.
+  * Playwright traces (`trace_<browser>.zip`)
+  * Videos
+  * Screenshots
 
+* **QKD proof**
 
-### Evidence Trend (GitHub Pages)
-After running the secure self-heal workflow, publish the evidence trend to `gh-pages` (see workflow **Publish Evidence Pages (gh-pages)**). The site reads `learning_curve.json` and renders an evidence-score chart.
+  * `reports/qkd/qkd_mitm_artifact.json`
+
+---
+
+## 🧭 Mermaid Diagram (Safety Ladder)
+
+```mermaid
+flowchart TD
+  A[workflow_dispatch enable_pr] --> B[Clean workspace]
+  B --> C[Run test with BREAK_LOCATOR=true]
+  C --> D[Collect locator_events.jsonl]
+  D --> E[Summarize evidence]
+  E --> F[Decide mode PROMOTE_PRIMARY or EXPAND_FALLBACKS]
+  F --> G{Patch produced?}
+
+  G -- No --> H[Stop: already healed\n(no PR, no learning-curve)]
+  G -- Yes --> I[git apply --check]
+  I --> J[Python syntax guard py_compile]
+  J --> K[Cross-browser matrix\nchromium firefox webkit]
+  K --> L{All green?}
+
+  L -- Yes --> M[QKD session establish]
+  L -- No --> N[QKD session establish]
+
+  M --> O[Open PR (normal)]
+  N --> P[Open PR (draft)]
+
+  O --> Q[Human review + merge]
+  P --> Q
+  Q --> R[System improves over time]
+```
+
+---
+
+## 👨‍💻 For Hiring Managers
+
+This project demonstrates:
+
+* Advanced Playwright + Pytest automation
+* GitHub Actions CI/CD orchestration
+* Agentic AI self-healing
+* Secure automation (QKD-gated PRs)
+* Cross-browser reliability
+* Production-grade safety controls
+
+It shows not just test automation, but **autonomous system governance**.
+
+---
+
+## 🎓 For Academics & Researchers
+
+This repository provides:
+
+* A reproducible experimental pipeline
+* Bayesian decision-making
+* Learning-curve artifacts
+* Cryptographic gating of AI actions
+* Separation of NO_OP vs intervention events
+
+It can be used as a reference architecture for:
+
+> *Quantum-secured autonomous software engineering systems.*
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## ✨ Vision
+
+TestPilot-AI explores a future where:
+
+> AI agents repair software safely, verifiably, and cryptographically.
+
+From flaky UI tests to quantum-secured DevOps.
+
+---
