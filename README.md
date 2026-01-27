@@ -140,6 +140,9 @@ Artifacts produced by the workflow:
 
 ---
 
+## 🧭 Mermaid Diagram (Safety Ladder)
+
+```mermaid
 flowchart TD
   A[workflow_dispatch enable_pr] --> B[Clean workspace]
   B --> C[Run test with BREAK_LOCATOR=true]
