@@ -64,6 +64,28 @@ NO_OP runs skip PR creation and learning-curve recording.
 
 ---
 
+## 🧩 Flow DSL Quick Reference
+
+TestPilot-AI site flows are defined in `sites/<site>/flow.yaml` and executed by a generic runner.
+Each flow is a list of steps; each step is a single-key mapping.
+
+Supported step types:
+
+* `goto: "/path?query=${VAR}"` (environment variables are substituted)
+* `click: { field: "locator_name" }`
+* `click_if_present: { field: "locator_name" }`
+* `fill: { field: "locator_name", value: "${VALUE}" }`
+* `press_key: { field: "locator_name", key: "Enter" }` (or `selector`)
+* `select_option: { field: "locator_name", value: "${VALUE}" }` (or `selector`)
+* `scroll: { field: "locator_name" }` or `scroll: "top" | "bottom"`
+* `wait_for_network_idle: { timeout_ms: 10000 }`
+* `expect_visible: { field: "locator_name" }`
+* `expect: { url_contains: "/path" }` or `expect: { selector: ".css" }`
+
+Locators live in `sites/<site>/locators.yaml` with a primary selector and fallbacks.
+
+---
+
 ## 🔐 Safety Ladder
 
 * Evidence gate (Bayesian thresholds)
