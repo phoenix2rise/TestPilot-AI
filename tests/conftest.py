@@ -15,6 +15,7 @@ def pytest_addoption(parser):
     except ValueError:
         # Option already registered by another plugin: keep it.
         pass
+    
 
 
 @pytest.fixture(scope="session")
