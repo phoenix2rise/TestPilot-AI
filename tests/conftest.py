@@ -1,9 +1,16 @@
 import os
+import sys
 from pathlib import Path
 
 import pytest
 import allure
 from playwright.sync_api import Error as PlaywrightError, sync_playwright
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 
 def pytest_addoption(parser):
     # pytest-playwright (and some other plugins) already define --browser.
@@ -15,9 +22,11 @@ def pytest_addoption(parser):
         # Option already registered by another plugin: keep it.
         pass
 
+
 @pytest.fixture(scope="session")
 def browser_name(request):
     return request.config.getoption("--browser")
+
 
 @pytest.fixture(scope="function")
 def page(browser_name, tmp_path_factory):
