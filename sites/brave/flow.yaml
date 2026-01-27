@@ -5,5 +5,7 @@ flows:
       - goto: "/search?q=${QUERY}"
       - click_if_present:
           field: "cookie_reject"
+      - click_if_present:
+          field: "popup_close"
       - expect_visible:
           field: "search_results"

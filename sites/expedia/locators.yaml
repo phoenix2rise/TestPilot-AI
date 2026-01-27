@@ -6,8 +6,17 @@ locators:
       - "button:has-text('Reject All')"
       - "button:has-text('Only necessary')"
       - "button:has-text('Decline')"
+  popup_close:
+    primary: "button[aria-label='Close']"
+    fallbacks:
+      - "button[aria-label='Dismiss']"
+      - "button:has-text('Close')"
+      - "button:has-text('No thanks')"
+      - "button:has-text('Not now')"
   search_results:
     primary: "[data-stid='property-listing']"
     fallbacks:
       - "[data-stid='property-listing-card']"
+      - "[data-stid='lodging-listing']"
+      - "[data-stid='property-listing-results']"
       - "section[data-testid='property-listing']"
