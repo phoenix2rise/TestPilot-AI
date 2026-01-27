@@ -21,6 +21,11 @@ def _run_flow(page, site_name: str, flow_name: str, vars: dict[str, str]) -> Non
     try:
         FlowRunner(ctx).run(page, flow_name, cfg.flows)
     except (PlaywrightError, PlaywrightTimeoutError, RuntimeError) as exc:
+        allure.attach(
+            str(exc),
+            name="skip reason",
+            attachment_type=allure.attachment_type.TEXT,
+        )
         pytest.skip(f"Skipping due to external site instability: {exc}")
 
     assert page.url
