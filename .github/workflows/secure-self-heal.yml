@@ -58,11 +58,8 @@ jobs:
         run: |
           python scripts/summarize_self_heal.py
           python scripts/decide_self_heal_action.py
-          echo "---- reports/self_heal contents ----"
           ls -la reports/self_heal || true
-          echo "---- self_heal_summary.md ----"
           cat reports/self_heal/self_heal_summary.md || true
-          echo "---- self_heal_decision.json ----"
           cat reports/self_heal/self_heal_decision.json || true
 
       - name: Generate patch (promote primary if confident; else expand fallbacks)
@@ -73,29 +70,41 @@ jobs:
           SELF_HEAL_PROMOTE_MIN_CI_LO: "0.55"
           SELF_HEAL_MIN_COUNT: "2"
         run: |
+          set -e
           test -f reports/self_heal/self_heal_decision.json
           MODE=$(python -c "import json;print(json.load(open('reports/self_heal/self_heal_decision.json'))['mode'])")
           echo "MODE=$MODE" >> $GITHUB_ENV
 
+          rm -f reports/patches/selected_self_heal.patch
+
           if [ "$MODE" = "PROMOTE_PRIMARY" ]; then
-            echo "Promoting primary locators"
-            python scripts/generate_self_heal_patch.py
-            cp reports/patches/locator_self_heal.patch reports/patches/selected_self_heal.patch
+            python scripts/generate_self_heal_patch.py || true
+            if [ -f reports/patches/locator_self_heal.patch ] && [ -s reports/patches/locator_self_heal.patch ]; then
+              cp reports/patches/locator_self_heal.patch reports/patches/selected_self_heal.patch
+            fi
           else
-            echo "Expanding fallback lists"
-            python scripts/generate_fallback_expansion_patch.py
-            cp reports/patches/fallback_expansion.patch reports/patches/selected_self_heal.patch
+            python scripts/generate_fallback_expansion_patch.py || true
+            if [ -f reports/patches/fallback_expansion.patch ] && [ -s reports/patches/fallback_expansion.patch ]; then
+              cp reports/patches/fallback_expansion.patch reports/patches/selected_self_heal.patch
+            fi
           fi
 
-          echo "---- selected_self_heal.patch (head) ----"
+          if [ ! -f reports/patches/selected_self_heal.patch ] || [ ! -s reports/patches/selected_self_heal.patch ]; then
+            echo "NO_PATCH=true" >> $GITHUB_ENV
+            echo "No patch produced; skipping PR + learning curve."
+            exit 0
+          fi
+
+          echo "NO_PATCH=false" >> $GITHUB_ENV
           sed -n '1,160p' reports/patches/selected_self_heal.patch || true
 
       - name: Validate patch applies cleanly
+        if: ${{ env.NO_PATCH != 'true' }}
         run: |
-          test -f reports/patches/selected_self_heal.patch
           git apply --check reports/patches/selected_self_heal.patch
 
       - name: Python syntax guard (compile changed files)
+        if: ${{ env.NO_PATCH != 'true' }}
         run: |
           git apply reports/patches/selected_self_heal.patch
           FILES=$(git diff --name-only | grep '\.py$' || true)
@@ -105,23 +114,21 @@ jobs:
           git reset --hard
 
       - name: Record learning-curve point (experiment artifact)
+        if: ${{ env.NO_PATCH != 'true' }}
         env:
           SELF_HEAL_DIR: "reports/self_heal"
         run: |
           python -m experiments.self_heal_learning_curve.run
 
-      # IMPORTANT:
-      # - Use GH_TOKEN with a PAT to avoid "GitHub Actions is not permitted to create PRs"
-      # - Create repo secret: TP_AI_PAT (classic PAT with repo scope)
       - name: Debug gh auth (who am I?)
-        if: ${{ inputs.enable_pr == 'true' }}
+        if: ${{ inputs.enable_pr == 'true' && env.NO_PATCH != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.TP_AI_PAT }}
         run: |
           gh auth status || true
 
       - name: Open QKD-gated PR (optional)
-        if: ${{ inputs.enable_pr == 'true' }}
+        if: ${{ inputs.enable_pr == 'true' && env.NO_PATCH != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.TP_AI_PAT }}
           BASE_BRANCH: main
@@ -178,7 +185,7 @@ jobs:
           PY
 
       - name: Publish gh-pages evidence trend (optional)
-        if: ${{ inputs.enable_pr == 'true' }}
+        if: ${{ inputs.enable_pr == 'true' && env.NO_PATCH != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.TP_AI_PAT }}
         run: |
