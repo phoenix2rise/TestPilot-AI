@@ -80,6 +80,80 @@ class FlowRunner:
                 page.fill(sel, val)
                 continue
 
+            if op == "press_key":
+                if not isinstance(payload, dict):
+                    raise ValueError("press_key step must be a mapping")
+                key = str(payload.get("key", "")).strip()
+                if not key:
+                    raise ValueError("press_key requires 'key'")
+                if "field" in payload:
+                    field = str(payload.get("field"))
+                    sel, ok = self.ctx.registry.try_locators(page, field, action="press_key")
+                    if not ok:
+                        raise RuntimeError(f"press_key failed: field={field} selectors not found")
+                    page.press(sel, key)
+                    continue
+                if "selector" in payload:
+                    sel = str(payload.get("selector"))
+                    page.press(sel, key)
+                    continue
+                raise ValueError("press_key requires 'field' or 'selector'")
+
+            if op == "select_option":
+                if not isinstance(payload, dict):
+                    raise ValueError("select_option step must be a mapping")
+                raw = str(payload.get("value", ""))
+                val = _substitute(raw, self.ctx.vars)
+                if "field" in payload:
+                    field = str(payload.get("field"))
+                    sel, ok = self.ctx.registry.try_locators(page, field, action="select_option")
+                    if not ok:
+                        raise RuntimeError(f"select_option failed: field={field} selectors not found")
+                    page.select_option(sel, value=val)
+                    continue
+                if "selector" in payload:
+                    sel = str(payload.get("selector"))
+                    page.select_option(sel, value=val)
+                    continue
+                raise ValueError("select_option requires 'field' or 'selector'")
+
+            if op == "scroll":
+                if isinstance(payload, str):
+                    if payload == "top":
+                        page.evaluate("window.scrollTo(0, 0)")
+                        continue
+                    if payload == "bottom":
+                        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                        continue
+                    raise ValueError("scroll string payload must be 'top' or 'bottom'")
+                if not isinstance(payload, dict):
+                    raise ValueError("scroll step must be a mapping or 'top'/'bottom'")
+                if "field" in payload:
+                    field = str(payload.get("field"))
+                    sel, ok = self.ctx.registry.try_locators(page, field, action="scroll")
+                    if not ok:
+                        raise RuntimeError(f"scroll failed: field={field} selectors not found")
+                    page.eval_on_selector(
+                        sel,
+                        "el => el.scrollIntoView({block: 'center', inline: 'center'})",
+                    )
+                    continue
+                if "selector" in payload:
+                    sel = str(payload.get("selector"))
+                    page.eval_on_selector(
+                        sel,
+                        "el => el.scrollIntoView({block: 'center', inline: 'center'})",
+                    )
+                    continue
+                raise ValueError("scroll requires 'field' or 'selector'")
+
+            if op == "wait_for_network_idle":
+                timeout_ms = 10000
+                if isinstance(payload, dict) and "timeout_ms" in payload:
+                    timeout_ms = int(payload.get("timeout_ms", timeout_ms))
+                page.wait_for_load_state("networkidle", timeout=timeout_ms)
+                continue
+
             if op == "expect":
                 if not isinstance(payload, dict):
                     raise ValueError("expect step must be a mapping")
