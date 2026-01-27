@@ -2,7 +2,7 @@
 
 This repository demonstrates an **agentic AI-driven self-healing test automation system** protected by **Quantum Key Distribution (QKD)** and governed by an evidence-based safety ladder.
 
-It is designed to speak to **both managers and academics**:
+It is designed to speak to **both hiring managers and academics**:
 
 * Engineers see a practical CI/CD pipeline that repairs brittle UI tests.
 * Researchers see a reproducible experiment with Bayesian evidence, learning curves, and cryptographic gating.
@@ -170,7 +170,7 @@ flowchart TD
 
 ---
 
-## 👨‍💻 For Managers
+## 👨‍💻 For Hiring Managers
 
 This project demonstrates:
 
