@@ -47,19 +47,11 @@ def page(browser_name, tmp_path_factory):
             browser = getattr(p, browser_name).launch(headless=True)
         except PlaywrightError as exc:
             message = str(exc)
-            if _is_missing_browser_error(message):
-                install_result = subprocess.run(
+            if "Executable doesn't exist" in message or "playwright install" in message:
+                subprocess.run(
                     [sys.executable, "-m", "playwright", "install", browser_name],
                     check=False,
-                    capture_output=True,
-                    text=True,
                 )
-                if install_result.returncode != 0:
-                    pytest.skip(
-                        "Playwright browser install failed for "
-                        f"{browser_name}:\n{install_result.stdout}\n"
-                        f"{install_result.stderr}"
-                    )
                 try:
                     browser = getattr(p, browser_name).launch(headless=True)
                 except PlaywrightError:
