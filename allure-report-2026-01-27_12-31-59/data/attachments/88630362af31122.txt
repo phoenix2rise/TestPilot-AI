@@ -1,0 +1,7 @@
+Performance metrics for firefox:
+  DOM Content Loaded: 1153.00 ms
+  Load Event: 1386.00 ms
+  First Paint: N/A
+  First Contentful Paint: 1093.00 ms
+  Time to Interactive (approx): 1086.00 ms
+  Response Start: 362.00 ms
