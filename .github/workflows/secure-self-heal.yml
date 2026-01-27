@@ -198,7 +198,7 @@ jobs:
 
   pr-and-pages:
     needs: [secure-self-heal, cross-browser-gate]
-    if: ${{ github.event.inputs.enable_pr == 'true' && needs.secure-self-heal.outputs.no_patch != 'true' }}
+    if: ${{ always() && github.event.inputs.enable_pr == 'true' && needs.secure-self-heal.outputs.no_patch != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
