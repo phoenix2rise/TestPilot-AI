@@ -95,6 +95,15 @@ jobs:
           test -f reports/patches/selected_self_heal.patch
           git apply --check reports/patches/selected_self_heal.patch
 
+      - name: Python syntax guard (compile changed files)
+        run: |
+          git apply reports/patches/selected_self_heal.patch
+          FILES=$(git diff --name-only | grep '\.py$' || true)
+          if [ -n "$FILES" ]; then
+            python -m py_compile $FILES
+          fi
+          git reset --hard
+
       - name: Record learning-curve point (experiment artifact)
         env:
           SELF_HEAL_DIR: "reports/self_heal"
