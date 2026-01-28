@@ -34,13 +34,26 @@ def browser_name(request):
     return request.config.getoption("--browser")
 
 
+def _safe_artifact_name(nodeid: str) -> str:
+    return (
+        nodeid.replace("/", "_")
+        .replace("\\", "_")
+        .replace("::", "__")
+        .replace(" ", "_")
+        .replace("[", "_")
+        .replace("]", "_")
+    )
+
+
 @pytest.fixture(scope="function")
-def page(browser_name, tmp_path_factory):
+def page(browser_name, request, tmp_path_factory):
     artifact_root = Path(os.getenv("PW_ARTIFACT_DIR", "artifacts/playwright"))
     video_dir = artifact_root / "videos" / browser_name
     trace_dir = artifact_root / "traces" / browser_name
+    screenshot_dir = artifact_root / "screenshots" / browser_name
     video_dir.mkdir(parents=True, exist_ok=True)
     trace_dir.mkdir(parents=True, exist_ok=True)
+    screenshot_dir.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
         try:
@@ -70,6 +83,44 @@ def page(browser_name, tmp_path_factory):
 
         yield page
 
-        context.tracing.stop(path=str(trace_dir / f"trace_{browser_name}.zip"))
+        test_id = _safe_artifact_name(request.node.nodeid)
+        screenshot_path = screenshot_dir / f"{test_id}.png"
+        try:
+            page.screenshot(path=str(screenshot_path), full_page=True)
+            if screenshot_path.exists():
+                allure.attach.file(
+                    str(screenshot_path),
+                    name="screenshot",
+                    attachment_type=allure.attachment_type.PNG,
+                )
+        except PlaywrightError:
+            pass
+
+        trace_path = trace_dir / f"trace_{browser_name}_{test_id}.zip"
+        try:
+            context.tracing.stop(path=str(trace_path))
+        except PlaywrightError:
+            trace_path = None
+
         context.close()
+
+        if trace_path and trace_path.exists():
+            allure.attach.file(
+                str(trace_path),
+                name="trace",
+                attachment_type=allure.attachment_type.ZIP,
+            )
+
+        if page.video:
+            try:
+                video_path = Path(page.video.path())
+            except PlaywrightError:
+                video_path = None
+            if video_path and video_path.exists():
+                allure.attach.file(
+                    str(video_path),
+                    name="video",
+                    attachment_type=allure.attachment_type.WEBM,
+                )
+
         browser.close()
