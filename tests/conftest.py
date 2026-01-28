@@ -58,17 +58,6 @@ def _safe_artifact_name(nodeid: str) -> str:
     )
 
 
-def _safe_artifact_name(nodeid: str) -> str:
-    return (
-        nodeid.replace("/", "_")
-        .replace("\\", "_")
-        .replace("::", "__")
-        .replace(" ", "_")
-        .replace("[", "_")
-        .replace("]", "_")
-    )
-
-
 @pytest.fixture(scope="function")
 def page(browser_name, request, tmp_path_factory):
     artifact_root = Path(os.getenv("PW_ARTIFACT_DIR", "artifacts/playwright"))
