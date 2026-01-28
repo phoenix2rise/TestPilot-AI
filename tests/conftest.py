@@ -23,24 +23,50 @@ def pytest_addoption(parser):
     # If it exists, adding it again raises:
     # ValueError: option names {'--browser'} already added
     try:
-        parser.addoption("--browser", action="store", default="chromium")
+        parser.addoption("--browser", action="store", default="all")
     except ValueError:
         # Option already registered by another plugin: keep it.
         pass
 
 
+def pytest_generate_tests(metafunc):
+    if "browser_name" not in metafunc.fixturenames:
+        return
+    browser_opt = metafunc.config.getoption("--browser")
+    if browser_opt:
+        browser_opt = browser_opt.strip()
+    if not browser_opt or browser_opt == "all":
+        browsers = ["chromium", "firefox", "webkit"]
+    else:
+        browsers = [item.strip() for item in browser_opt.split(",") if item.strip()]
+    metafunc.parametrize("browser_name", browsers, scope="session")
+
+
 @pytest.fixture(scope="session")
 def browser_name(request):
-    return request.config.getoption("--browser")
+    return request.param
+
+
+def _safe_artifact_name(nodeid: str) -> str:
+    return (
+        nodeid.replace("/", "_")
+        .replace("\\", "_")
+        .replace("::", "__")
+        .replace(" ", "_")
+        .replace("[", "_")
+        .replace("]", "_")
+    )
 
 
 @pytest.fixture(scope="function")
-def page(browser_name, tmp_path_factory):
+def page(browser_name, request, tmp_path_factory):
     artifact_root = Path(os.getenv("PW_ARTIFACT_DIR", "artifacts/playwright"))
     video_dir = artifact_root / "videos" / browser_name
     trace_dir = artifact_root / "traces" / browser_name
+    screenshot_dir = artifact_root / "screenshots" / browser_name
     video_dir.mkdir(parents=True, exist_ok=True)
     trace_dir.mkdir(parents=True, exist_ok=True)
+    screenshot_dir.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
         try:
@@ -70,6 +96,44 @@ def page(browser_name, tmp_path_factory):
 
         yield page
 
-        context.tracing.stop(path=str(trace_dir / f"trace_{browser_name}.zip"))
+        test_id = _safe_artifact_name(request.node.nodeid)
+        screenshot_path = screenshot_dir / f"{test_id}.png"
+        try:
+            page.screenshot(path=str(screenshot_path), full_page=True)
+            if screenshot_path.exists():
+                allure.attach.file(
+                    str(screenshot_path),
+                    name="screenshot",
+                    attachment_type=allure.attachment_type.PNG,
+                )
+        except PlaywrightError:
+            pass
+
+        trace_path = trace_dir / f"trace_{browser_name}_{test_id}.zip"
+        try:
+            context.tracing.stop(path=str(trace_path))
+        except PlaywrightError:
+            trace_path = None
+
         context.close()
+
+        if trace_path and trace_path.exists():
+            allure.attach.file(
+                str(trace_path),
+                name="trace",
+                attachment_type=allure.attachment_type.ZIP,
+            )
+
+        if page.video:
+            try:
+                video_path = Path(page.video.path())
+            except PlaywrightError:
+                video_path = None
+            if video_path and video_path.exists():
+                allure.attach.file(
+                    str(video_path),
+                    name="video",
+                    attachment_type=allure.attachment_type.WEBM,
+                )
+
         browser.close()
