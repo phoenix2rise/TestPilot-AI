@@ -11,6 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
 
@@ -40,6 +41,7 @@ jobs:
         with:
           name: allure-results-${{ matrix.browser }}
           path: reports/allure-results
+          overwrite: true
 
   report-merge:
     name: Merge & Deploy Allure Report
@@ -92,8 +94,9 @@ jobs:
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report-${{ env.REPORT_TIMESTAMP }}
+          name: allure-report
           path: allure-report-${{ env.REPORT_TIMESTAMP }}
+          overwrite: true
       
       - name: Deploy Allure Report and Update Index Page
         run: |
