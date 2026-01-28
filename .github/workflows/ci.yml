@@ -38,7 +38,7 @@ jobs:
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ matrix.browser }}
+          name: allure-results
           path: reports/allure-results
 
   report-merge:
@@ -52,7 +52,7 @@ jobs:
       - name: Download Allure Results
         uses: actions/download-artifact@v4
         with:
-         pattern: allure-results-*
+         name: allure-results
          path: merged-results
 
       - name: List downloaded artifacts
@@ -92,7 +92,7 @@ jobs:
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report-${{ env.REPORT_TIMESTAMP }}
+          name: allure-report
           path: allure-report-${{ env.REPORT_TIMESTAMP }}
       
       - name: Deploy Allure Report and Update Index Page
