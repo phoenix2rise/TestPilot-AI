@@ -41,6 +41,7 @@ jobs:
         with:
           name: allure-results
           path: reports/allure-results
+          overwrite: true
 
   report-merge:
     name: Merge & Deploy Allure Report
@@ -95,6 +96,7 @@ jobs:
         with:
           name: allure-report
           path: allure-report-${{ env.REPORT_TIMESTAMP }}
+          overwrite: true
       
       - name: Deploy Allure Report and Update Index Page
         run: |

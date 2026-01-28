@@ -58,6 +58,10 @@ def _safe_artifact_name(nodeid: str) -> str:
     )
 
 
+def _env_flag(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
 @pytest.fixture(scope="function")
 def page(browser_name, request, tmp_path_factory):
     artifact_root = Path(os.getenv("PW_ARTIFACT_DIR", "artifacts/playwright"))
@@ -68,9 +72,20 @@ def page(browser_name, request, tmp_path_factory):
     trace_dir.mkdir(parents=True, exist_ok=True)
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 
+    headless = not _env_flag("PW_HEADED", "0")
+    slow_mo = int(os.getenv("PW_SLOW_MO", "0"))
+    user_agent = os.getenv(
+        "PW_USER_AGENT",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    )
+    locale = os.getenv("PW_LOCALE", "en-US")
+    viewport_width = int(os.getenv("PW_VIEWPORT_WIDTH", "1365"))
+    viewport_height = int(os.getenv("PW_VIEWPORT_HEIGHT", "768"))
+
     with sync_playwright() as p:
         try:
-            browser = getattr(p, browser_name).launch(headless=True)
+            browser = getattr(p, browser_name).launch(headless=headless, slow_mo=slow_mo)
         except PlaywrightError as exc:
             message = str(exc)
             if "Executable doesn't exist" in message or "playwright install" in message:
@@ -86,7 +101,12 @@ def page(browser_name, request, tmp_path_factory):
                     )
             else:
                 raise
-        context = browser.new_context(record_video_dir=str(video_dir))
+        context = browser.new_context(
+            record_video_dir=str(video_dir),
+            user_agent=user_agent,
+            locale=locale,
+            viewport={"width": viewport_width, "height": viewport_height},
+        )
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
 
