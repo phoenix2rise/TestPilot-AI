@@ -1,0 +1,1 @@
+Skipping due to external site instability (site=booking, flow=search): expect_visible failed: field=search_results selectors not found
