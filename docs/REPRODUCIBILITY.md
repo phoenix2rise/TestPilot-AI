@@ -6,7 +6,7 @@ For academic-style deterministic runs, you can extend the simulator to accept a 
 For CI proof-of-behavior, nondeterminism is acceptable as long as the assertions hold robustly.
 
 ## CI artifacts
-- Allure outputs under `reports/` (multi-browser runs share the same results directory; each test is labeled with the `browser` parameter so the report can be filtered/grouped by browser).
+- Allure outputs under `reports/` (multi-browser runs store per-browser results under `reports/allure-results/<browser>` and the combined report uses `reports/allure-results-all`; each test is labeled with the `browser` parameter so the report can be filtered/grouped by browser).
 - QKD artifact under `reports/qkd/qkd_mitm_artifact.json`
 
 ## How to rerun locally
