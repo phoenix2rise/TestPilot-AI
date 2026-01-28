@@ -3,6 +3,7 @@ flows:
   search:
     steps:
       - goto: "/search?q=${QUERY}"
+      - check_recaptcha_if_present: {}
       - click_if_present:
           field: "cookie_reject"
       - click_if_present:
