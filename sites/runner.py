@@ -30,6 +30,34 @@ class FlowRunner:
     def __init__(self, ctx: FlowContext):
         self.ctx = ctx
 
+    def _click_recaptcha_if_present(self, page, *, timeout_ms: int = 1500) -> None:
+        iframe_selector = "iframe[title*='reCAPTCHA'], iframe[src*='recaptcha']"
+        checkbox_selectors = [
+            "span#recaptcha-anchor",
+            "div.recaptcha-checkbox-border",
+        ]
+
+        try:
+            if page.locator(iframe_selector).count() == 0:
+                return
+        except Exception:
+            return
+
+        try:
+            page.wait_for_selector(iframe_selector, timeout=timeout_ms, state="attached")
+        except Exception:
+            return
+
+        frame = page.frame_locator(iframe_selector)
+        for checkbox_selector in checkbox_selectors:
+            try:
+                checkbox = frame.locator(checkbox_selector)
+                checkbox.wait_for(state="visible", timeout=timeout_ms)
+                checkbox.click()
+                return
+            except Exception:
+                continue
+
     def run(self, page, flow_name: str, flows: Dict[str, Any]) -> None:
         flow = flows.get(flow_name)
         if not isinstance(flow, dict):
@@ -68,6 +96,13 @@ class FlowRunner:
                 )
                 if ok:
                     page.click(sel)
+                continue
+
+            if op == "check_recaptcha_if_present":
+                timeout_ms = 1500
+                if isinstance(payload, dict) and "timeout_ms" in payload:
+                    timeout_ms = int(payload.get("timeout_ms", timeout_ms))
+                self._click_recaptcha_if_present(page, timeout_ms=timeout_ms)
                 continue
 
             if op == "fill":
