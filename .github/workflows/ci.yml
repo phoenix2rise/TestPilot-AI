@@ -11,6 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
 
@@ -92,7 +93,7 @@ jobs:
       - name: Upload Allure Report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report-${{ env.REPORT_TIMESTAMP }}
+          name: allure-report
           path: allure-report-${{ env.REPORT_TIMESTAMP }}
       
       - name: Deploy Allure Report and Update Index Page
