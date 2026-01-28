@@ -3,6 +3,7 @@ flows:
   search:
     steps:
       - goto: "/Hotel-Search?destination=${DESTINATION}&checkin=${CHECKIN}&checkout=${CHECKOUT}&rooms=1&adults=2"
+      - check_recaptcha_if_present: {}
       - click_if_present:
           field: "cookie_essential"
       - click_if_present:
