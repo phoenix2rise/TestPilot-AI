@@ -23,15 +23,39 @@ def pytest_addoption(parser):
     # If it exists, adding it again raises:
     # ValueError: option names {'--browser'} already added
     try:
-        parser.addoption("--browser", action="store", default="chromium")
+        parser.addoption("--browser", action="store", default="all")
     except ValueError:
         # Option already registered by another plugin: keep it.
         pass
 
 
+def pytest_generate_tests(metafunc):
+    if "browser_name" not in metafunc.fixturenames:
+        return
+    browser_opt = metafunc.config.getoption("--browser")
+    if browser_opt:
+        browser_opt = browser_opt.strip()
+    if not browser_opt or browser_opt == "all":
+        browsers = ["chromium", "firefox", "webkit"]
+    else:
+        browsers = [item.strip() for item in browser_opt.split(",") if item.strip()]
+    metafunc.parametrize("browser_name", browsers, scope="session")
+
+
 @pytest.fixture(scope="session")
 def browser_name(request):
-    return request.config.getoption("--browser")
+    return request.param
+
+
+def _safe_artifact_name(nodeid: str) -> str:
+    return (
+        nodeid.replace("/", "_")
+        .replace("\\", "_")
+        .replace("::", "__")
+        .replace(" ", "_")
+        .replace("[", "_")
+        .replace("]", "_")
+    )
 
 
 def _safe_artifact_name(nodeid: str) -> str:
