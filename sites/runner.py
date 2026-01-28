@@ -111,6 +111,7 @@ class FlowRunner:
                     field,
                     action="click_if_present",
                     timeout_ms=1500,
+                    state="visible",
                 )
                 if ok:
                     page.click(sel)
