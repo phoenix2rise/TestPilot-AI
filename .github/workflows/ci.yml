@@ -29,6 +29,11 @@ jobs:
           playwright install --with-deps
 
       - name: Run tests
+        env:
+          PW_LOCALE: "en-US"
+          PW_SLOW_MO: "50"
+          PW_VIEWPORT_WIDTH: "1365"
+          PW_VIEWPORT_HEIGHT: "768"
         run: |
           PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=reports/allure-results --browser=${{ matrix.browser }}
       
