@@ -6,7 +6,7 @@ RESULTS_DIR="reports/allure-results"
 rm -rf "${RESULTS_DIR}"
 mkdir -p "${RESULTS_DIR}"
 
-pytest --alluredir="${RESULTS_DIR}"
+pytest --alluredir="${RESULTS_DIR}" --clean-alluredir
 
 if [ -z "$(ls -A "${RESULTS_DIR}")" ]; then
   echo "Allure results directory is empty: ${RESULTS_DIR}" >&2

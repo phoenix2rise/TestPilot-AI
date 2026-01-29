@@ -11,7 +11,7 @@ for browser in chromium firefox webkit; do
   browser_results_dir="${RESULTS_DIR_BASE}/${browser}"
   rm -rf "${browser_results_dir}"
   mkdir -p "${browser_results_dir}"
-  pytest --browser="${browser}" --alluredir="${browser_results_dir}"
+  pytest --browser="${browser}" --alluredir="${browser_results_dir}" --clean-alluredir
 done
 
 mkdir -p "${COMBINED_RESULTS_DIR}"
