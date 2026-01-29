@@ -13,12 +13,17 @@ Transform TestPilot-AI from a test framework into a real-time, agentic test auto
 - Self-Heal Agent: proposes locator fixes and requests privileged actions via the gateway.
 - Test Designer Agent: suggests coverage based on diffs/stories.
 
+## Agent Pipeline
+`scripts/run_agent_pipeline.py` runs a deterministic pipeline that executes tests, triages failures,
+summarizes self-heal evidence, and produces test design suggestions for changed files.
+
 ## Control Plane (MCP-like Gateway)
 `mcp/gateway.py` registers tools (run tests, generate reports, privileged commit) and enforces policies.
 
 ## Trust boundaries
 - Agents do not directly execute privileged actions.
 - Privileged tools require a valid QKD session (accepted + not expired).
+- Privileged tools require evidence confidence that meets the minimum threshold.
 
 ## Artifacts
 - Allure results/report
