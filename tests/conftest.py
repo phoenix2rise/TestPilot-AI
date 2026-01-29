@@ -110,6 +110,18 @@ def page(browser_name, request, tmp_path_factory):
         context.tracing.start(screenshots=True, snapshots=True)
         page = context.new_page()
 
+        def _close_popup(new_page):
+            if new_page is page:
+                return
+            try:
+                new_page.close()
+            except PlaywrightError:
+                pass
+
+        page.on("popup", _close_popup)
+        context.on("page", _close_popup)
+        page.on("dialog", lambda dialog: dialog.dismiss())
+
         # ⬇️ Add browser label here, in test context
         allure.dynamic.label("browser", browser_name)
         allure.dynamic.parameter("browser", browser_name)
