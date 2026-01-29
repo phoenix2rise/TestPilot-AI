@@ -8,12 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest    
 
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +23,20 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          playwright install --with-deps
+          playwright install --with-depss
+          
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
 
+    steps:
+      - uses: actions/checkout@v4
+      
       - name: Run tests
         run: |
           PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=reports/allure-results --browser=${{ matrix.browser }}
