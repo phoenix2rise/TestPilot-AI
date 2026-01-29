@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          playwright install --with-depss
+          playwright install --with-deps
           
   test:
     name: Testing
