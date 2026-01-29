@@ -9,7 +9,6 @@ on:
 
 jobs:
   test:
-    name: Cross Browser Testing
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -24,36 +23,14 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m playwright install --with-deps
+          pip install -r requirements.txt
+          playwright install --with-deps
 
       - name: Run tests
-        env:
-          PW_LOCALE: "en-US"
-          PW_SLOW_MO: "50"
-          PW_VIEWPORT_WIDTH: "1365"
-          PW_VIEWPORT_HEIGHT: "768"
         run: |
-          PW_BROWSER=${{ matrix.browser }} python -m pytest tests --alluredir=reports/allure-results --browser=${{ matrix.browser }}
+          PW_BROWSER=${{ matrix.browser }} pytest tests --alluredir=reports/allure-results --browser=${{ matrix.browser }}
       
       - name: Add environment info to Allure results
         run: |
@@ -62,7 +39,7 @@ jobs:
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ matrix.browser }}
+          name: allure-results
           path: reports/allure-results
 
   report-merge:
@@ -76,9 +53,8 @@ jobs:
       - name: Download Allure Results
         uses: actions/download-artifact@v4
         with:
-         pattern: allure-results-*
+         name: allure-results
          path: merged-results
-         merge-multiple: true
 
       - name: List downloaded artifacts
         run: |
@@ -119,7 +95,6 @@ jobs:
         with:
           name: allure-report
           path: allure-report-${{ env.REPORT_TIMESTAMP }}
-          overwrite: true
       
       - name: Deploy Allure Report and Update Index Page
         run: |
